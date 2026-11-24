@@ -1,5 +1,5 @@
 using System;
-using TMPro;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -9,12 +9,18 @@ public class GameManager : MonoBehaviour
     private const string SaveKey = "ClearCat.Save";
     private const float AutoSaveInterval = 10f;
 
-    [SerializeField] private TMP_Text TMP_Text;
-
     public GameData Data { get; private set; }
+
+    public StageTemplate CurrentTemplate { get; private set; }
+    public IReadOnlyList<StageTemplateSlot> StagePlacements { get; private set; } = Array.Empty<StageTemplateSlot>();
+
+    public event Action StagePlacementsChanged;
 
     private void Awake()
     {
+        Screen.orientation = ScreenOrientation.Portrait;
+        Application.targetFrameRate = 60;
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -56,7 +62,20 @@ public class GameManager : MonoBehaviour
 
     private void RefreshStagePlacements()
     {
-        Debug.Log("오브젝트 재배치");
+        string mapId = GetMapId(Data.chapter, Data.stage);
+
+        StageTemplate template = StageTemplateRepository.GetById(mapId);
+
+        CurrentTemplate = template;
+        StagePlacements = template != null ? template.GetSlots() : Array.Empty<StageTemplateSlot>();
+
+        StagePlacementsChanged?.Invoke();
+    }
+
+    private string GetMapId(int chapter, int stage)
+    {
+        // TODO: 스테이지 정보 테이블에서 (chapter, stage)의 맵 Id를 받아오기
+        return "heart";
     }
 
     private void OnApplicationQuit()
