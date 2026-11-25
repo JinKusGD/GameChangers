@@ -77,8 +77,15 @@ public abstract class Skill : MonoBehaviour
                 return FindPlayerTarget();
 
             default:
-                return Block.FindNearest(transform.position, Range);
+                return FindNearestTarget();
         }
+    }
+
+    private Block FindNearestTarget()
+    {
+        if (Player == null || Player.BlockField == null) { return null; }
+
+        return Player.BlockField.FindNearest(transform.position, Range);
     }
 
     private Block FindPlayerTarget()
