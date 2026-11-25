@@ -1,0 +1,11 @@
+[
+  { "Id": "gray", "MaxHp": 10, "SpriteName": "", "ColorHex": "#8C8580" },
+  { "Id": "orange", "MaxHp": 20, "SpriteName": "", "ColorHex": "#CC7A47" },
+  { "Id": "yellow", "MaxHp": 30, "SpriteName": "", "ColorHex": "#F2CC40" },
+  { "Id": "skyblue", "MaxHp": 40, "SpriteName": "", "ColorHex": "#73CCF2" },
+  { "Id": "purple", "MaxHp": 50, "SpriteName": "", "ColorHex": "#B373E6" },
+  { "Id": "green", "MaxHp": 60, "SpriteName": "", "ColorHex": "#66D973" },
+  { "Id": "pink", "MaxHp": 70, "SpriteName": "", "ColorHex": "#F2738C" },
+  { "Id": "blue", "MaxHp": 80, "SpriteName": "", "ColorHex": "#4D66D9" },
+  { "Id": "black", "MaxHp": 90, "SpriteName": "", "ColorHex": "#262626" }
+]
