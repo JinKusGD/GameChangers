@@ -17,8 +17,8 @@ public class PlayerIdleState : PlayerState
         }
     }
 
-    public override void OnAttackRequested()
+    public override void OnAttackRequested(float attackInterval)
     {
-        TryEnterAttack();
+        TryEnterAttack(attackInterval);
     }
 }

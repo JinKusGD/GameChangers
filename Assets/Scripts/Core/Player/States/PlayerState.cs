@@ -16,17 +16,18 @@ public abstract class PlayerState : IState
 
     public virtual void OnExit() { }
 
-    public virtual void OnAttackRequested() { }
+    public virtual void OnAttackRequested(float attackInterval) { }
 
     protected void ChangeState(PlayerState nextState)
     {
         Context.StateMachine.ChangeState(nextState);
     }
 
-    protected void TryEnterAttack()
+    protected void TryEnterAttack(float attackInterval)
     {
         if (!Animation.HasAnimator) { return; }
 
+        Context.AttackState.AttackInterval = attackInterval;
         ChangeState(Context.AttackState);
     }
 }

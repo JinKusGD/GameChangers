@@ -19,8 +19,8 @@ public class PlayerMoveState : PlayerState
         Movement.MoveTowardTarget();
     }
 
-    public override void OnAttackRequested()
+    public override void OnAttackRequested(float attackInterval)
     {
-        TryEnterAttack();
+        TryEnterAttack(attackInterval);
     }
 }

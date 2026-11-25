@@ -5,4 +5,6 @@ public static class PlayerAnimationHash
     public static readonly int Idle = Animator.StringToHash("Idle");
     public static readonly int Run = Animator.StringToHash("Run");
     public static readonly int Attack = Animator.StringToHash("Attack");
+
+    public static readonly int AttackSpeedParameter = Animator.StringToHash("AttackSpeed");
 }

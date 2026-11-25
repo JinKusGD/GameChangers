@@ -2,11 +2,14 @@ public class PlayerAttackState : PlayerState
 {
     private bool _hasEnteredAttackAnimation;
 
+    public float AttackInterval { get; set; }
+
     public PlayerAttackState(PlayerContext context) : base(context) { }
 
     public override void OnEnter()
     {
         _hasEnteredAttackAnimation = false;
+        Animation.FitAttackSpeedToInterval(AttackInterval);
         Animation.Play(PlayerAnimationHash.Attack);
     }
 
@@ -28,8 +31,9 @@ public class PlayerAttackState : PlayerState
         }
     }
 
-    public override void OnAttackRequested()
+    public override void OnAttackRequested(float attackInterval)
     {
+        AttackInterval = attackInterval;
         ChangeState(this);
     }
 }
