@@ -1,9 +1,9 @@
 using System.ComponentModel;
 
-public class PlayerModel : INotifyPropertyChanged
+public class PlayerModel : ObservableModel
 {
-    private readonly PropertyChangedEventArgs _moveSpeedPropertyChangedArgs = new PropertyChangedEventArgs(nameof(MoveSpeed));
-    private readonly PropertyChangedEventArgs _attackPowerPropertyChangedArgs = new PropertyChangedEventArgs(nameof(AttackPower));
+    private static readonly PropertyChangedEventArgs MoveSpeedChangedArgs = new PropertyChangedEventArgs(nameof(MoveSpeed));
+    private static readonly PropertyChangedEventArgs AttackPowerChangedArgs = new PropertyChangedEventArgs(nameof(AttackPower));
 
     private float _moveSpeed;
     private double _attackPower;
@@ -11,33 +11,13 @@ public class PlayerModel : INotifyPropertyChanged
     public float MoveSpeed
     {
         get => _moveSpeed;
-        set
-        {
-            if (_moveSpeed == value)
-            {
-                return;
-            }
-
-            _moveSpeed = value;
-
-            PropertyChanged?.Invoke(this, _moveSpeedPropertyChangedArgs);
-        }
+        set => SetProperty(ref _moveSpeed, value, MoveSpeedChangedArgs);
     }
 
     public double AttackPower
     {
         get => _attackPower;
-        set
-        {
-            if (_attackPower == value)
-            {
-                return;
-            }
-
-            _attackPower = value;
-
-            PropertyChanged?.Invoke(this, _attackPowerPropertyChangedArgs);
-        }
+        set => SetProperty(ref _attackPower, value, AttackPowerChangedArgs);
     }
 
     public PlayerModel(float moveSpeed, double attackPower)
@@ -45,6 +25,4 @@ public class PlayerModel : INotifyPropertyChanged
         _moveSpeed = moveSpeed;
         _attackPower = attackPower;
     }
-
-    public event PropertyChangedEventHandler PropertyChanged;
 }

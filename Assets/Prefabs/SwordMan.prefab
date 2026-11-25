@@ -815,12 +815,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3493a98a58e8ed048a667fa85fa0a06b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SwordAttack
-  displayName: "\uAC80 \uACF5\uACA9"
-  targetMode: 1
-  cooldown: 1
-  range: 1.2
-  damage: 3
-  _attackPowerMultiplier: 1
 --- !u!1 &8195274181073243778
 GameObject:
   m_ObjectHideFlags: 0

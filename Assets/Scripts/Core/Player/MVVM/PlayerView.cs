@@ -15,6 +15,8 @@ public class PlayerView : MonoBehaviour
 
     private PlayerViewModel _playerViewModel;
 
+    private readonly SkillRunner _skillRunner = new SkillRunner();
+
     public event Action AttackHit;
 
     public bool CanPlayAttackAnimation => _animator != null;
@@ -77,13 +79,26 @@ public class PlayerView : MonoBehaviour
 
     private void Update()
     {
+        float deltaTime = Time.deltaTime;
+
         _context.Movement.RefreshTarget();
         _context.StateMachine.OnUpdate();
+        _skillRunner.Tick(deltaTime);
     }
 
     public void StartAttack(float attackInterval)
     {
         CurrentState?.OnAttackRequested(attackInterval);
+    }
+
+    public void RegisterSkill(Skill skill)
+    {
+        _skillRunner.Register(skill);
+    }
+
+    public void UnregisterSkill(Skill skill)
+    {
+        _skillRunner.Unregister(skill);
     }
 
     private void Refresh()
