@@ -6,6 +6,7 @@ public class PlayerMovement
 
     private readonly Transform _owner;
     private readonly Transform _model;
+    private readonly BlockField _blockField;
     private readonly float _arrivalDistance;
     private readonly float _modelBaseScaleX;
 
@@ -23,10 +24,11 @@ public class PlayerMovement
     public bool HasArrived { get; private set; }
     public int FacingDirection { get; private set; } = -1;
 
-    public PlayerMovement(Transform owner, Transform model, float moveSpeed, float arrivalDistance)
+    public PlayerMovement(Transform owner, Transform model, BlockField blockField, float moveSpeed, float arrivalDistance)
     {
         _owner = owner;
         _model = model;
+        _blockField = blockField;
         MoveSpeed = moveSpeed;
         _arrivalDistance = arrivalDistance;
         _modelBaseScaleX = model != null ? Mathf.Abs(model.localScale.x) : 1f;
@@ -36,7 +38,7 @@ public class PlayerMovement
     {
         if (Target == null || !Target.IsAlive)
         {
-            Target = Block.FindNearest(_owner.position);
+            Target = _blockField.FindNearest(_owner.position);
         }
 
         if (Target == null)

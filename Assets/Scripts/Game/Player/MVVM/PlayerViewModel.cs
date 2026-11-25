@@ -35,6 +35,4 @@ public class PlayerViewModel : INotifyPropertyChanged, IDisposable
                 break;
         }
     }
-
-
 }

@@ -1,29 +1,34 @@
 using System;
 using System.ComponentModel;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PlayerView : MonoBehaviour
 {
-    private readonly float _arrivalDistance = 1.2f;
+    private const float ArrivalDistance = 1.2f;
 
     [Header("Visual")]
     [SerializeField] private Transform _model;
     [SerializeField] private Animator _animator;
     [SerializeField] private PlayerAnimationEvents _animationEvents;
 
-    private PlayerContext _context;
-
-    private PlayerViewModel _playerViewModel;
+    [Header("Field")]
+    [SerializeField, FormerlySerializedAs("_stageField")] private BlockField _blockField;
 
     private readonly SkillRunner _skillRunner = new SkillRunner();
+
+    private PlayerContext _context;
+    private PlayerViewModel _playerViewModel;
 
     public event Action AttackHit;
 
     public bool CanPlayAttackAnimation => _animator != null;
 
-    public Block Target => _context.Movement.Target;
+    public Block Target => _context?.Movement.Target;
 
-    public PlayerState CurrentState => _context.StateMachine.CurrentState;
+    public BlockField BlockField => _blockField;
+
+    public PlayerState CurrentState => _context?.StateMachine.CurrentState;
 
     private void Awake()
     {
@@ -32,6 +37,7 @@ public class PlayerView : MonoBehaviour
         hasAllReferences &= UnityUtility.CheckReference(_model, nameof(_model), this);
         hasAllReferences &= UnityUtility.CheckReference(_animator, nameof(_animator), this);
         hasAllReferences &= UnityUtility.CheckReference(_animationEvents, nameof(_animationEvents), this);
+        hasAllReferences &= UnityUtility.CheckReference(_blockField, nameof(_blockField), this);
 
         enabled = hasAllReferences;
 
@@ -42,7 +48,7 @@ public class PlayerView : MonoBehaviour
 
         _playerViewModel = new PlayerViewModel();
 
-        PlayerMovement movement = new PlayerMovement(transform, _model, _playerViewModel.MoveSpeed, _arrivalDistance);
+        PlayerMovement movement = new PlayerMovement(transform, _model, _blockField, _playerViewModel.MoveSpeed, ArrivalDistance);
         PlayerAnimation animation = new PlayerAnimation(_animator);
 
         _context = new PlayerContext(movement, animation);
@@ -58,7 +64,14 @@ public class PlayerView : MonoBehaviour
 
     private void OnDisable()
     {
+        if (_playerViewModel == null) { return; }
+
         _playerViewModel.PropertyChanged -= OnPropertyChanged;
+    }
+
+    private void Start()
+    {
+        _context.StateMachine.ChangeState(_context.IdleState);
     }
 
     private void OnDestroy()
@@ -70,11 +83,6 @@ public class PlayerView : MonoBehaviour
         {
             _animationEvents.AttackHit -= OnAttackHit;
         }
-    }
-
-    private void Start()
-    {
-        _context.StateMachine.ChangeState(_context.IdleState);
     }
 
     private void Update()
@@ -103,6 +111,11 @@ public class PlayerView : MonoBehaviour
 
     private void Refresh()
     {
+        ApplyMoveSpeed();
+    }
+
+    private void ApplyMoveSpeed()
+    {
         _context.Movement.MoveSpeed = _playerViewModel.MoveSpeed;
     }
 
@@ -111,7 +124,7 @@ public class PlayerView : MonoBehaviour
         switch (e.PropertyName)
         {
             case nameof(_playerViewModel.MoveSpeed):
-                _context.Movement.MoveSpeed = _playerViewModel.MoveSpeed;
+                ApplyMoveSpeed();
                 break;
         }
     }

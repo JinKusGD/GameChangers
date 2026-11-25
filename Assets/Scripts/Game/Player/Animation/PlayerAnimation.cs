@@ -46,9 +46,12 @@ public class PlayerAnimation
     {
         if (!HasAnimator) { return; }
 
-        float speed = attackInterval > 0f && attackInterval < _attackClipLength
-            ? _attackClipLength / attackInterval
-            : 1f;
+        float speed = 1f;
+
+        if (attackInterval > 0f && attackInterval < _attackClipLength)
+        {
+            speed = _attackClipLength / attackInterval;
+        }
 
         _animator.SetFloat(PlayerAnimationHash.AttackSpeedParameter, speed);
     }
@@ -65,7 +68,7 @@ public class PlayerAnimation
             }
         }
 
-        Debug.LogWarning($"[{nameof(PlayerAnimation)}] '{clipName}' 클립을 찾지 못했습니다.", _animator);
+        DebugUtility.LogWarning($"[{nameof(PlayerAnimation)}] '{clipName}' 클립을 찾지 못했습니다.", _animator);
         return 0f;
     }
 }
