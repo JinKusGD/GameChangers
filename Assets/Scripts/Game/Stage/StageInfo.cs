@@ -1,8 +1,12 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class StageInfo
 {
+    private const double OverflowHpMultiplier = 8;
+    private const double OverflowGoldMultiplier = 6;
+
     public string LayoutId { get; }
     public string StageName { get; }
     public Vector2 FieldPosition { get; }
@@ -11,18 +15,19 @@ public class StageInfo
 
     public IReadOnlyList<ChapterTraitData> ChapterTraits { get; }
 
-    private StageInfo(StageData stageData, ChapterData chapterData)
+    private StageInfo(StageData stageData, ChapterData chapterData, int overflowChapters)
     {
         LayoutId = stageData.LayoutId;
         StageName = stageData.StageName;
         FieldPosition = stageData.FieldPosition.ToVector2();
-        HpMultiplier = chapterData.HpMultiplier;
-        GoldMultiplier = chapterData.GoldMultiplier;
+
+        HpMultiplier = chapterData.HpMultiplier * Math.Pow(OverflowHpMultiplier, overflowChapters);
+        GoldMultiplier = chapterData.GoldMultiplier * Math.Pow(OverflowGoldMultiplier, overflowChapters);
         ChapterTraits = chapterData.Traits;
     }
 
-    public static StageInfo Create(StageData stageData, ChapterData chapterData)
+    public static StageInfo Create(StageData stageData, ChapterData chapterData, int overflowChapters = 0)
     {
-        return new StageInfo(stageData, chapterData);
+        return new StageInfo(stageData, chapterData, Math.Max(0, overflowChapters));
     }
 }

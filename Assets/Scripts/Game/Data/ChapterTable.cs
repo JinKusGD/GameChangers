@@ -9,9 +9,12 @@ public class ChapterTable
 
     private readonly Dictionary<int, ChapterData> _dataByChapter = new Dictionary<int, ChapterData>();
 
+    public int LastChapter { get; private set; }
+
     public async UniTask LoadAsync(CancellationToken token)
     {
         _dataByChapter.Clear();
+        LastChapter = 0;
 
         List<ChapterData> rows = await JsonTableLoader.LoadAsync<ChapterData>(AddressKeys.ChapterTable, Tag, DescribeRow, token);
 
@@ -21,6 +24,14 @@ public class ChapterTable
         }
 
         TableChecks.CheckSequential(_dataByChapter.Keys, rows.Count, Tag, UnitName);
+
+        foreach (int chapter in _dataByChapter.Keys)
+        {
+            if (chapter > LastChapter)
+            {
+                LastChapter = chapter;
+            }
+        }
     }
 
     public void CheckBlockIds(BlockTable blockTable)

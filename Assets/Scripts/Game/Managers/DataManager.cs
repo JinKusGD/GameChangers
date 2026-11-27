@@ -63,11 +63,18 @@ public sealed class DataManager
     public StageInfo GetStageInfo(int chapter, int stage)
     {
         StageData stageData = Stages.Get(stage);
-        ChapterData chapterData = Chapters.Get(chapter);
 
-        if (stageData == null || chapterData == null) { return null; }
+        if (stageData == null) { return null; }
 
-        return StageInfo.Create(stageData, chapterData);
+        int lastChapter = Chapters.LastChapter;
+        int sourceChapter = lastChapter > 0 ? Math.Min(chapter, lastChapter) : chapter;
+        ChapterData chapterData = Chapters.Get(sourceChapter);
+
+        if (chapterData == null) { return null; }
+
+        int overflowChapters = Math.Max(0, chapter - sourceChapter);
+
+        return StageInfo.Create(stageData, chapterData, overflowChapters);
     }
 
     private static async UniTask LoadSafelyAsync(string tableName, UniTask loadTask)
