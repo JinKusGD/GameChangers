@@ -10,7 +10,7 @@
     "HpMultiplier": 8,
     "GoldMultiplier": 6,
     "Traits": [
-      { "Type": "Armor", "BlockIds": ["blue", "black"], "Params": { "Percent": 10 } }
+      { "Type": "Armor", "BlockIds": ["Block_Armor", "Block_DamageCap"], "Params": { "Percent": 10 } }
     ]
   },
   {
