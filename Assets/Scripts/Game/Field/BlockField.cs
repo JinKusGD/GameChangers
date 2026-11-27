@@ -1,30 +1,48 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class BlockField : MonoBehaviour
 {
     private const float BlockWorldSize = 1f;
-    private const int BlocksPerLayoutCell = 3;
 
     [SerializeField] private Block _blockPrefab;
     [SerializeField] private Transform _cellRoot;
 
-    private readonly BlockData[] _blockDataByKey = new BlockData[BlockLayout.MaxBlockKey + 1];
+    private StageBlockSet _stageBlocks = StageBlockSet.Empty;
 
     private BlockGrid _grid = BlockGrid.Empty;
+    private BlockDamageResolver _damageResolver;
+    private BlockFieldSaveHandler _saveHandler;
+
+    private BlockLayout _layout;
     private GameManager _gameManager;
 
+    private bool _isAllBlocksBrokenRaised;
+
     public int AliveCount => _grid.AliveCount;
+    public int GridSize => _grid.Size;
+    public int ChangeVersion => _grid.ChangeVersion;
+
+    public event Action AllBlocksBroken;
 
     private void Awake()
     {
         bool hasAllReferences = true;
+
         hasAllReferences &= UnityUtility.CheckReference(_blockPrefab, nameof(_blockPrefab), this);
         hasAllReferences &= UnityUtility.CheckReference(_cellRoot, nameof(_cellRoot), this);
 
-        if (!hasAllReferences) { return; }
+        if (!hasAllReferences)
+        {
+            enabled = false;
+            return;
+        }
 
         CreateGrid();
+
+        _damageResolver = new BlockDamageResolver(_grid);
+        _saveHandler = new BlockFieldSaveHandler(_grid);
     }
 
     private void Start()
@@ -38,7 +56,16 @@ public class BlockField : MonoBehaviour
         }
 
         _gameManager.StageChanged += OnStageChanged;
-        OnStageChanged();
+        _gameManager.Saving += OnSaving;
+
+        BuildCurrentStage();
+        _saveHandler.Load(_gameManager.Data.StageSave, _layout, _stageBlocks);
+    }
+
+    private void Update()
+    {
+        RegenTrait.TickAll(Time.deltaTime);
+        CheckAllBlocksBroken();
     }
 
     private void OnDestroy()
@@ -46,28 +73,127 @@ public class BlockField : MonoBehaviour
         if (_gameManager != null)
         {
             _gameManager.StageChanged -= OnStageChanged;
+            _gameManager.Saving -= OnSaving;
         }
 
         _grid.Dispose();
     }
 
-    public void Build(StageInfo stageInfo)
+    public void Damage(Block target, double damage)
     {
-        BlockLayout layout = null;
+        if (_damageResolver == null) { return; }
 
-        if (stageInfo != null)
+        _damageResolver.Damage(target, damage);
+    }
+
+    public Block FindNearest(Vector2 position, float maxDistance = float.PositiveInfinity)
+    {
+        Vector2 gridPosition = ToGridPosition(position);
+        float gridMaxDistance = maxDistance / GetCellWorldSize();
+
+        return _grid.FindNearest(gridPosition, gridMaxDistance);
+    }
+
+    public void FindInRadius(Vector2 center, float radius, List<Block> results)
+    {
+        Vector2 gridCenter = ToGridPosition(center);
+        float gridRadius = radius / GetCellWorldSize();
+
+        _grid.FindInRadius(gridCenter, gridRadius, results);
+    }
+
+    public bool TryGetCellColor(int column, int row, out Color color)
+    {
+        color = default;
+
+        if (_layout == null) { return false; }
+
+        Block cell = _grid.GetCell(column, row);
+
+        if (!cell.IsAlive) { return false; }
+
+        color = cell.Color;
+        return true;
+    }
+
+    public Vector2 GetNormalizedPosition(Vector2 worldPosition)
+    {
+        return ToGridPosition(worldPosition) / _grid.Size;
+    }
+
+    private void OnStageChanged()
+    {
+        BuildCurrentStage();
+    }
+
+    private void OnSaving()
+    {
+        _saveHandler.Save(_gameManager.Data.StageSave, _layout, _stageBlocks);
+    }
+
+    private void OnCellBroken(Block cell)
+    {
+        _gameManager.AddGold(cell.Gold);
+    }
+
+    private void OnSplitRequested(Block cell, int splitBlockKey)
+    {
+        StageBlock stageBlock = _stageBlocks.Get(splitBlockKey);
+
+        if (stageBlock == null) { return; }
+
+        _grid.PlaceBlock(cell, stageBlock);
+    }
+
+    private void CreateGrid()
+    {
+        _grid = new BlockGrid(BlockLayout.Size);
+
+        for (int row = 0; row < _grid.Size; row++)
         {
-            layout = DataManager.Instance.BlockLayouts.GetById(stageInfo.LayoutId);
+            for (int column = 0; column < _grid.Size; column++)
+            {
+                Block cell = CreateCell(column, row);
+                _grid.SetCell(column, row, cell);
+            }
         }
+    }
 
-        if (layout == null)
+    private Block CreateCell(int column, int row)
+    {
+        Block cell = Instantiate(_blockPrefab, _cellRoot);
+        cell.name = $"Cell_{column}_{row}";
+        cell.transform.localPosition = GetCellLocalPosition(column, row);
+        cell.transform.localScale = Vector3.one * BlockWorldSize;
+        cell.Clear();
+
+        cell.SplitRequested += OnSplitRequested;
+        cell.Broken += OnCellBroken;
+
+        return cell;
+    }
+
+    private void BuildCurrentStage()
+    {
+        StageInfo stageInfo = DataManager.Instance.GetStageInfo(_gameManager.Chapter, _gameManager.Stage);
+
+        Build(stageInfo);
+    }
+
+    private void Build(StageInfo stageInfo)
+    {
+        _layout = stageInfo != null ? DataManager.Instance.BlockLayouts.GetById(stageInfo.LayoutId) : null;
+
+        if (_layout == null)
         {
             Clear();
             return;
         }
 
+        _isAllBlocksBrokenRaised = false;
+
         MoveCellRoot(stageInfo.FieldPosition);
-        ResolveBlockData(stageInfo, layout);
+        _stageBlocks = StageBlockSet.Create(DataManager.Instance.Blocks, stageInfo);
 
         _grid.ResetAlive();
 
@@ -76,87 +202,44 @@ public class BlockField : MonoBehaviour
             for (int column = 0; column < _grid.Size; column++)
             {
                 Block cell = _grid.GetCell(column, row);
-                int blockKey = layout.GetBlockKey(column / BlocksPerLayoutCell, row / BlocksPerLayoutCell);
-                BlockData data = _blockDataByKey[blockKey];
 
-                if (data == null)
+                int blockKey = _layout.GetBlockKey(column, row);
+                StageBlock stageBlock = _stageBlocks.Get(blockKey);
+
+                if (stageBlock == null)
                 {
                     cell.Clear();
                     continue;
                 }
 
-                cell.Setup(data);
-                _grid.MarkAlive(column, row);
+                _grid.PlaceBlock(cell, stageBlock);
             }
         }
-    }
 
-    public void Clear()
-    {
-        _grid.ClearAlive();
-    }
-
-    public Block FindNearest(Vector2 position, float maxDistance = float.PositiveInfinity)
-    {
-        return _grid.FindNearest(ToGridPosition(position), maxDistance / GetCellWorldSize());
-    }
-
-    public void FindInRadius(Vector2 center, float radius, List<Block> results)
-    {
-        _grid.FindInRadius(ToGridPosition(center), radius / GetCellWorldSize(), results);
-    }
-
-    private void OnStageChanged()
-    {
-        StageInfo stageInfo = DataManager.Instance.Stages.Get(_gameManager.Chapter, _gameManager.Stage);
-
-        Build(stageInfo);
-    }
-
-    private void CreateGrid()
-    {
-        _grid = new BlockGrid(BlockLayout.Size * BlocksPerLayoutCell);
-
-        for (int row = 0; row < _grid.Size; row++)
+        if (AliveCount == 0)
         {
-            for (int column = 0; column < _grid.Size; column++)
-            {
-                Block cell = Instantiate(_blockPrefab, _cellRoot);
-                cell.name = $"Cell_{column}_{row}";
-                cell.transform.localPosition = GetCellLocalPosition(column, row);
-                cell.transform.localScale = Vector3.one * BlockWorldSize;
-                cell.Clear();
-
-                _grid.SetCell(column, row, cell);
-            }
+            DebugUtility.LogError($"[BlockField] '{_layout.Id}' 레이아웃에 놓을 수 있는 블록이 없습니다. 블록 데이터를 확인하세요.", this);
+            Clear();
         }
+    }
+
+    private void CheckAllBlocksBroken()
+    {
+        if (_layout == null || AliveCount > 0 || _isAllBlocksBrokenRaised) { return; }
+
+        _isAllBlocksBrokenRaised = true;
+        AllBlocksBroken?.Invoke();
+    }
+
+    private void Clear()
+    {
+        _layout = null;
+        _grid.ClearAlive();
     }
 
     private void MoveCellRoot(Vector2 position)
     {
         _cellRoot.position = new Vector3(position.x, position.y, _cellRoot.position.z);
-    }
-
-    private void ResolveBlockData(StageInfo stageInfo, BlockLayout layout)
-    {
-        _blockDataByKey[BlockLayout.EmptyBlockKey] = null;
-
-        for (int blockKey = 1; blockKey <= BlockLayout.MaxBlockKey; blockKey++)
-        {
-            _blockDataByKey[blockKey] = null;
-
-            if (!layout.ContainsBlockKey(blockKey)) { continue; }
-
-            string blockId = stageInfo.GetBlockId(blockKey);
-
-            if (blockId == null)
-            {
-                DebugUtility.LogError($"[BlockField] '{layout.Id}' 레이아웃의 {blockKey}번 블록이 스테이지 정보에 연결되지 않았습니다.", this);
-                continue;
-            }
-
-            _blockDataByKey[blockKey] = DataManager.Instance.Blocks.GetById(blockId);
-        }
     }
 
     private Vector2 ToGridPosition(Vector2 worldPosition)

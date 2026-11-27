@@ -5,78 +5,98 @@ using UnityEngine;
 public class BlockGrid : IDisposable
 {
     private const int RingSearchLimit = 5;
-    private const int NotAlive = -1;
 
     public static readonly BlockGrid Empty = new BlockGrid(0);
 
     private readonly Block[] _cells;
-    private readonly Dictionary<Block, int> _cellIndexByBlock = new Dictionary<Block, int>();
-
-    private readonly int[] _aliveCellIndices;
-    private readonly int[] _aliveSlotByCell;
-    private int _aliveCount;
+    private readonly AliveCellSet _alive;
 
     public int Size { get; }
-    public int AliveCount => _aliveCount;
+    public int AliveCount => _alive.Count;
+    public int ChangeVersion { get; private set; }
 
     public BlockGrid(int size)
     {
         Size = size;
 
         _cells = new Block[size * size];
-        _aliveCellIndices = new int[_cells.Length];
-        _aliveSlotByCell = new int[_cells.Length];
-
-        for (int i = 0; i < _aliveSlotByCell.Length; i++)
-        {
-            _aliveSlotByCell[i] = NotAlive;
-        }
+        _alive = new AliveCellSet(_cells.Length);
     }
 
     public void Dispose()
     {
         for (int i = 0; i < _cells.Length; i++)
         {
-            if (_cells[i] != null)
+            Block cell = _cells[i];
+
+            if (cell != null)
             {
-                _cells[i].Broken -= OnCellBroken;
+                cell.Broken -= OnCellBroken;
             }
         }
-
-        _cellIndexByBlock.Clear();
     }
 
     public void SetCell(int column, int row, Block cell)
     {
         int cellIndex = ToIndex(column, row);
-
         _cells[cellIndex] = cell;
-        _cellIndexByBlock.Add(cell, cellIndex);
 
         cell.Broken += OnCellBroken;
+        cell.Bind(column, row);
     }
 
     public Block GetCell(int column, int row)
     {
-        return _cells[ToIndex(column, row)];
-    }
-
-    public void MarkAlive(int column, int row)
-    {
         int cellIndex = ToIndex(column, row);
 
-        if (_aliveSlotByCell[cellIndex] != NotAlive) { return; }
+        return _cells[cellIndex];
+    }
 
-        _aliveSlotByCell[cellIndex] = _aliveCount;
-        _aliveCellIndices[_aliveCount] = cellIndex;
-        _aliveCount++;
+    public Block GetCell(int cellIndex)
+    {
+        return _cells[cellIndex];
+    }
+
+    public bool IsValidIndex(int cellIndex)
+    {
+        return cellIndex >= 0 && cellIndex < _cells.Length;
+    }
+
+    public int ToIndex(int column, int row)
+    {
+        return row * Size + column;
+    }
+
+    public bool TryGetAliveCell(int column, int row, out Block cell)
+    {
+        cell = null;
+
+        if (!IsInside(column, row)) { return false; }
+
+        cell = GetCell(column, row);
+
+        return cell != null && cell.IsAlive;
+    }
+
+    public void PlaceBlock(Block cell, StageBlock stageBlock)
+    {
+        cell.Setup(stageBlock);
+        MarkAlive(cell);
+        ChangeVersion++;
+    }
+
+    public void RemoveBlock(Block cell)
+    {
+        MarkDead(cell);
+        cell.Clear();
     }
 
     public void ClearAlive()
     {
-        for (int i = 0; i < _aliveCount; i++)
+        for (int i = 0; i < _alive.Count; i++)
         {
-            _cells[_aliveCellIndices[i]].Clear();
+            Block cell = GetAliveCell(i);
+            cell.Clear();
         }
 
         ResetAlive();
@@ -84,145 +104,153 @@ public class BlockGrid : IDisposable
 
     public void ResetAlive()
     {
-        for (int i = 0; i < _aliveCount; i++)
-        {
-            _aliveSlotByCell[_aliveCellIndices[i]] = NotAlive;
-        }
-
-        _aliveCount = 0;
+        _alive.Clear();
+        ChangeVersion++;
     }
 
     public Block FindNearest(Vector2 gridPosition, float maxDistance)
     {
-        if (_aliveCount == 0) { return null; }
+        if (_alive.Count == 0) { return null; }
 
-        Block nearest = null;
-        float nearestSqrDistance = maxDistance * maxDistance;
+        NearestCandidate nearest = new NearestCandidate(gridPosition, maxDistance);
 
-        bool isComplete = SearchRings(gridPosition, ref nearest, ref nearestSqrDistance);
-
-        if (!isComplete)
+        if (!TrySearchNearbyRings(ref nearest))
         {
-            SearchAlive(gridPosition, ref nearest, ref nearestSqrDistance);
+            SearchAllAlive(ref nearest);
         }
 
-        return nearest;
+        return nearest.Block;
     }
 
     public void FindInRadius(Vector2 gridCenter, float radius, List<Block> results)
     {
         results.Clear();
 
-        if (_aliveCount == 0) { return; }
+        if (_alive.Count == 0) { return; }
 
         float radiusSqr = radius * radius;
+        RectInt area = GetClampedArea(gridCenter, radius);
 
-        int minColumn = Mathf.Max(0, Mathf.FloorToInt(gridCenter.x - radius));
-        int maxColumn = Mathf.Min(Size - 1, Mathf.FloorToInt(gridCenter.x + radius));
-        int minRow = Mathf.Max(0, Mathf.FloorToInt(gridCenter.y - radius));
-        int maxRow = Mathf.Min(Size - 1, Mathf.FloorToInt(gridCenter.y + radius));
-
-        int areaCellCount = (maxColumn - minColumn + 1) * (maxRow - minRow + 1);
-
-        if (_aliveCount < areaCellCount)
+        if (_alive.Count < area.width * area.height)
         {
             CollectAliveInRadius(gridCenter, radiusSqr, results);
             return;
         }
 
-        for (int row = minRow; row <= maxRow; row++)
-        {
-            for (int column = minColumn; column <= maxColumn; column++)
-            {
-                Block cell = GetCell(column, row);
+        CollectAliveInArea(area, gridCenter, radiusSqr, results);
+    }
 
-                if (cell.IsAlive && SqrDistanceToCell(column, row, gridCenter) <= radiusSqr)
-                {
-                    results.Add(cell);
-                }
-            }
+    private void MarkAlive(Block cell)
+    {
+        int cellIndex = GetCellIndex(cell);
+
+        _alive.Add(cellIndex);
+    }
+
+    private void MarkDead(Block cell)
+    {
+        int cellIndex = GetCellIndex(cell);
+        bool isRemoved = _alive.Remove(cellIndex);
+
+        if (isRemoved)
+        {
+            ChangeVersion++;
         }
     }
 
-    private bool SearchRings(Vector2 gridPosition, ref Block nearest, ref float nearestSqrDistance)
+    private Block GetAliveCell(int slot)
     {
-        int originColumn = Mathf.FloorToInt(gridPosition.x);
-        int originRow = Mathf.FloorToInt(gridPosition.y);
+        int cellIndex = _alive[slot];
+
+        return _cells[cellIndex];
+    }
+
+    private int GetCellIndex(Block cell)
+    {
+        return ToIndex(cell.Column, cell.Row);
+    }
+
+    private void OnCellBroken(Block cell)
+    {
+        MarkDead(cell);
+    }
+
+    private bool TrySearchNearbyRings(ref NearestCandidate nearest)
+    {
+        int originColumn = Mathf.FloorToInt(nearest.Position.x);
+        int originRow = Mathf.FloorToInt(nearest.Position.y);
         int maxRing = GetMaxRing(originColumn, originRow);
 
         for (int ring = 0; ring <= maxRing; ring++)
         {
-            float ringMinDistance = Mathf.Max(0f, ring - 0.5f);
-
-            if (ringMinDistance * ringMinDistance > nearestSqrDistance) { return true; }
+            if (IsRingBeyond(ring, nearest.SqrDistance)) { return true; }
 
             if (ring > RingSearchLimit) { return false; }
 
-            SearchRing(originColumn, originRow, ring, gridPosition, ref nearest, ref nearestSqrDistance);
+            SearchRing(originColumn, originRow, ring, ref nearest);
         }
 
         return true;
     }
 
-    private void SearchRing(int originColumn, int originRow, int ring, Vector2 gridPosition, ref Block nearest, ref float nearestSqrDistance)
+    private static bool IsRingBeyond(int ring, float sqrDistance)
+    {
+        float ringMinDistance = Mathf.Max(0f, ring - 0.5f);
+
+        return ringMinDistance * ringMinDistance > sqrDistance;
+    }
+
+    private void SearchRing(int originColumn, int originRow, int ring, ref NearestCandidate nearest)
     {
         int minColumn = originColumn - ring;
         int maxColumn = originColumn + ring;
         int minRow = originRow - ring;
         int maxRow = originRow + ring;
 
+        SearchRingTopAndBottom(minColumn, maxColumn, minRow, maxRow, ref nearest);
+        SearchRingLeftAndRight(minColumn, maxColumn, minRow, maxRow, ref nearest);
+    }
+
+    private void SearchRingTopAndBottom(int minColumn, int maxColumn, int minRow, int maxRow, ref NearestCandidate nearest)
+    {
         int firstColumn = Mathf.Max(0, minColumn);
         int lastColumn = Mathf.Min(Size - 1, maxColumn);
 
         for (int column = firstColumn; column <= lastColumn; column++)
         {
-            CheckNearer(column, minRow, gridPosition, ref nearest, ref nearestSqrDistance);
+            ConsiderCell(column, minRow, ref nearest);
 
             if (maxRow != minRow)
             {
-                CheckNearer(column, maxRow, gridPosition, ref nearest, ref nearestSqrDistance);
+                ConsiderCell(column, maxRow, ref nearest);
             }
         }
+    }
 
+    private void SearchRingLeftAndRight(int minColumn, int maxColumn, int minRow, int maxRow, ref NearestCandidate nearest)
+    {
         int firstRow = Mathf.Max(0, minRow + 1);
         int lastRow = Mathf.Min(Size - 1, maxRow - 1);
 
         for (int row = firstRow; row <= lastRow; row++)
         {
-            CheckNearer(minColumn, row, gridPosition, ref nearest, ref nearestSqrDistance);
-            CheckNearer(maxColumn, row, gridPosition, ref nearest, ref nearestSqrDistance);
+            ConsiderCell(minColumn, row, ref nearest);
+            ConsiderCell(maxColumn, row, ref nearest);
         }
     }
 
-    private void SearchAlive(Vector2 gridPosition, ref Block nearest, ref float nearestSqrDistance)
+    private void SearchAllAlive(ref NearestCandidate nearest)
     {
-        for (int i = 0; i < _aliveCount; i++)
+        for (int i = 0; i < _alive.Count; i++)
         {
-            int cellIndex = _aliveCellIndices[i];
-            float sqrDistance = SqrDistanceToCell(cellIndex % Size, cellIndex / Size, gridPosition);
+            Block cell = GetAliveCell(i);
+            float sqrDistance = SqrDistanceToCell(cell, nearest.Position);
 
-            if (sqrDistance < nearestSqrDistance)
-            {
-                nearestSqrDistance = sqrDistance;
-                nearest = _cells[cellIndex];
-            }
+            nearest.Consider(cell, sqrDistance);
         }
     }
 
-    private void CollectAliveInRadius(Vector2 gridCenter, float radiusSqr, List<Block> results)
-    {
-        for (int i = 0; i < _aliveCount; i++)
-        {
-            int cellIndex = _aliveCellIndices[i];
-
-            if (SqrDistanceToCell(cellIndex % Size, cellIndex / Size, gridCenter) <= radiusSqr)
-            {
-                results.Add(_cells[cellIndex]);
-            }
-        }
-    }
-
-    private void CheckNearer(int column, int row, Vector2 gridPosition, ref Block nearest, ref float nearestSqrDistance)
+    private void ConsiderCell(int column, int row, ref NearestCandidate nearest)
     {
         if (!IsInside(column, row)) { return; }
 
@@ -230,36 +258,52 @@ public class BlockGrid : IDisposable
 
         if (!cell.IsAlive) { return; }
 
-        float sqrDistance = SqrDistanceToCell(column, row, gridPosition);
+        float sqrDistance = SqrDistanceToCell(column, row, nearest.Position);
+        nearest.Consider(cell, sqrDistance);
+    }
 
-        if (sqrDistance < nearestSqrDistance)
+    private RectInt GetClampedArea(Vector2 gridCenter, float radius)
+    {
+        int minColumn = Mathf.Max(0, Mathf.FloorToInt(gridCenter.x - radius));
+        int maxColumn = Mathf.Min(Size - 1, Mathf.FloorToInt(gridCenter.x + radius));
+        int minRow = Mathf.Max(0, Mathf.FloorToInt(gridCenter.y - radius));
+        int maxRow = Mathf.Min(Size - 1, Mathf.FloorToInt(gridCenter.y + radius));
+
+        return new RectInt(minColumn, minRow, maxColumn - minColumn + 1, maxRow - minRow + 1);
+    }
+
+    private void CollectAliveInRadius(Vector2 gridCenter, float radiusSqr, List<Block> results)
+    {
+        for (int i = 0; i < _alive.Count; i++)
         {
-            nearestSqrDistance = sqrDistance;
-            nearest = cell;
+            Block cell = GetAliveCell(i);
+            float sqrDistance = SqrDistanceToCell(cell, gridCenter);
+
+            if (sqrDistance <= radiusSqr)
+            {
+                results.Add(cell);
+            }
         }
     }
 
-    private void OnCellBroken(Block cell)
+    private void CollectAliveInArea(RectInt area, Vector2 gridCenter, float radiusSqr, List<Block> results)
     {
-        if (_cellIndexByBlock.TryGetValue(cell, out int cellIndex))
+        for (int row = area.yMin; row < area.yMax; row++)
         {
-            RemoveAlive(cellIndex);
+            for (int column = area.xMin; column < area.xMax; column++)
+            {
+                Block cell = GetCell(column, row);
+
+                if (!cell.IsAlive) { continue; }
+
+                float sqrDistance = SqrDistanceToCell(column, row, gridCenter);
+
+                if (sqrDistance <= radiusSqr)
+                {
+                    results.Add(cell);
+                }
+            }
         }
-    }
-
-    private void RemoveAlive(int cellIndex)
-    {
-        int slot = _aliveSlotByCell[cellIndex];
-
-        if (slot == NotAlive) { return; }
-
-        int lastCellIndex = _aliveCellIndices[_aliveCount - 1];
-
-        _aliveCellIndices[slot] = lastCellIndex;
-        _aliveSlotByCell[lastCellIndex] = slot;
-
-        _aliveSlotByCell[cellIndex] = NotAlive;
-        _aliveCount--;
     }
 
     private int GetMaxRing(int column, int row)
@@ -275,9 +319,9 @@ public class BlockGrid : IDisposable
         return column >= 0 && column < Size && row >= 0 && row < Size;
     }
 
-    private int ToIndex(int column, int row)
+    private static float SqrDistanceToCell(Block cell, Vector2 gridPosition)
     {
-        return row * Size + column;
+        return SqrDistanceToCell(cell.Column, cell.Row, gridPosition);
     }
 
     private static float SqrDistanceToCell(int column, int row, Vector2 gridPosition)
@@ -286,5 +330,28 @@ public class BlockGrid : IDisposable
         float dy = row + 0.5f - gridPosition.y;
 
         return dx * dx + dy * dy;
+    }
+
+    private struct NearestCandidate
+    {
+        public readonly Vector2 Position;
+
+        public Block Block { get; private set; }
+        public float SqrDistance { get; private set; }
+
+        public NearestCandidate(Vector2 position, float maxDistance)
+        {
+            Position = position;
+            Block = null;
+            SqrDistance = maxDistance * maxDistance;
+        }
+
+        public void Consider(Block cell, float sqrDistance)
+        {
+            if (sqrDistance >= SqrDistance) { return; }
+
+            SqrDistance = sqrDistance;
+            Block = cell;
+        }
     }
 }

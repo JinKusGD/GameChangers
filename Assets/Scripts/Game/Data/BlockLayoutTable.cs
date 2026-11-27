@@ -53,6 +53,19 @@ public class BlockLayoutTable
         return _layoutsById.TryGetValue(id, out layout);
     }
 
+    public void CheckBlockKeys(BlockTable blockTable)
+    {
+        foreach (BlockLayout layout in _layoutsById.Values)
+        {
+            for (int blockKey = BlockKey.Min; blockKey <= BlockKey.Max; blockKey++)
+            {
+                if (!layout.UsesBlockKey(blockKey) || blockTable.TryGetByKey(blockKey, out _)) { continue; }
+
+                DebugUtility.LogError($"[{Tag}] '{layout.Id}' 레이아웃이 쓰는 블록 키 {blockKey}번 블록이 없습니다. 그 칸은 비게 됩니다.");
+            }
+        }
+    }
+
     private static async UniTask<IList<Texture2D>> LoadTexturesAsync(AsyncOperationHandle<IList<Texture2D>> handle, CancellationToken token)
     {
         try

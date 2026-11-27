@@ -44,13 +44,20 @@ public class BlockTable
 
     public BlockData GetByKey(int key)
     {
-        if (!BlockKey.IsValid(key) || _dataByKey[key] == null)
+        if (!TryGetByKey(key, out BlockData data))
         {
             DebugUtility.LogError($"[{Tag}] Key {key} 데이터가 없습니다.");
             return null;
         }
 
-        return _dataByKey[key];
+        return data;
+    }
+
+    public bool TryGetByKey(int key, out BlockData data)
+    {
+        data = BlockKey.IsValid(key) ? _dataByKey[key] : null;
+
+        return data != null;
     }
 
     private void Clear()

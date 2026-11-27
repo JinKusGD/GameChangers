@@ -17,27 +17,19 @@ public class BlockHitEffect : MonoBehaviour
     [SerializeField, Min(0f), FormerlySerializedAs("shakeStrength")] private float _shakeStrength = 0.06f;
     [SerializeField, Min(0f), FormerlySerializedAs("shakeDuration")] private float _shakeDuration = 0.12f;
 
-    [Header("Flash")]
-    [SerializeField, FormerlySerializedAs("flashColor")] private Color _flashColor = Color.white;
-    [SerializeField, Min(0f), FormerlySerializedAs("flashDuration")] private float _flashDuration = 0.08f;
-
     private Block _block;
-    private SpriteRenderer _spriteRenderer;
 
     private Vector3 _baseScale;
     private Vector3 _basePosition;
-    private Color _baseColor;
 
     private float _squash;
     private float _squashVelocity;
     private float _shakeTimer;
-    private float _flashTimer;
     private bool _isPlaying;
 
     private void Awake()
     {
         _block = GetComponent<Block>();
-        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
         _block.Damaged += OnDamaged;
         _block.Cleared += OnCleared;
@@ -68,7 +60,6 @@ public class BlockHitEffect : MonoBehaviour
 
         UpdateSquash(deltaTime);
         UpdateShake(deltaTime);
-        UpdateFlash(deltaTime);
 
         if (IsSettled())
         {
@@ -85,7 +76,6 @@ public class BlockHitEffect : MonoBehaviour
 
         _squashVelocity += _squashImpulse;
         _shakeTimer = _shakeDuration;
-        _flashTimer = _flashDuration;
     }
 
     private void OnCleared(Block _)
@@ -100,11 +90,6 @@ public class BlockHitEffect : MonoBehaviour
     {
         _baseScale = transform.localScale;
         _basePosition = transform.localPosition;
-
-        if (_spriteRenderer != null)
-        {
-            _baseColor = _spriteRenderer.color;
-        }
 
         _isPlaying = true;
         enabled = true;
@@ -134,27 +119,11 @@ public class BlockHitEffect : MonoBehaviour
         transform.localPosition = _basePosition + shakeOffset;
     }
 
-    private void UpdateFlash(float deltaTime)
-    {
-        if (_spriteRenderer == null) { return; }
-
-        _flashTimer -= deltaTime;
-
-        if (_flashTimer > 0f)
-        {
-            _spriteRenderer.color = _flashColor;
-        }
-        else
-        {
-            _spriteRenderer.color = _baseColor;
-        }
-    }
-
     private bool IsSettled()
     {
         bool isSquashSettled = Mathf.Abs(_squash) < SettledSquash && Mathf.Abs(_squashVelocity) < SettledSquashVelocity;
 
-        return isSquashSettled && _shakeTimer <= 0f && _flashTimer <= 0f;
+        return isSquashSettled && _shakeTimer <= 0f;
     }
 
     private void Restore()
@@ -162,16 +131,10 @@ public class BlockHitEffect : MonoBehaviour
         _squash = 0f;
         _squashVelocity = 0f;
         _shakeTimer = 0f;
-        _flashTimer = 0f;
         _isPlaying = false;
 
         transform.localScale = _baseScale;
         transform.localPosition = _basePosition;
-
-        if (_spriteRenderer != null)
-        {
-            _spriteRenderer.color = _baseColor;
-        }
 
         enabled = false;
     }

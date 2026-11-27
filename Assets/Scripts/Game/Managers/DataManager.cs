@@ -90,6 +90,7 @@ public sealed class DataManager
     {
         Chapters.CheckBlockIds(Blocks);
         Stages.CheckLayoutIds(BlockLayouts);
+        BlockLayouts.CheckBlockKeys(Blocks);
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
