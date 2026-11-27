@@ -9,24 +9,19 @@ public enum UpgradeType
 [Serializable]
 public class GameData
 {
-    public int chapter = 1;
-    public int stage = 1;
+    public int Chapter = 1;
+    public int Stage = 1;
 
-    public double gold;
+    public double Gold;
 
-    public int dummyWeaponLevel = 1;
-    public int speedLevel;
+    public long LastSaveUtcTicks;
 
-    public long lastSaveUtcTicks;
+    public StageSaveData StageSave = new StageSaveData();
 
     public int GetUpgrade(UpgradeType type)
     {
         switch (type)
-        {
-            case UpgradeType.Damage:
-                return dummyWeaponLevel;
-            case UpgradeType.MoveSpeed:
-                return speedLevel;
+        { 
             default:
                 throw new ArgumentOutOfRangeException(nameof(type));
         }
@@ -36,12 +31,6 @@ public class GameData
     {
         switch (type)
         {
-            case UpgradeType.Damage:
-                dummyWeaponLevel++;
-                break;
-            case UpgradeType.MoveSpeed:
-                speedLevel++;
-                break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(type));
         }
