@@ -4,7 +4,7 @@ using UnityEngine;
 public static class SaveStorage
 {
     private const string Tag = "SaveStorage";
-    private const string SaveKey = "ClearCat.Save";
+    private const string SaveKey = "BreakKnight.Save";
 
     private static readonly JsonSerializerSettings SerializerSettings = CreateSerializerSettings();
 

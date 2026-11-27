@@ -54,10 +54,7 @@ public class GameSceneInitializer : MonoBehaviour
 
         if (gameManager.StageSave.TryGetPlayerPosition(out Vector2 savedPosition)) { return savedPosition; }
 
-        StageModel stageModel = ModelManager.Instance.StageModel;
-        StageInfo stageInfo = DataManager.Instance.GetStageInfo(stageModel.Chapter, stageModel.Stage);
-
-        return stageInfo != null ? stageInfo.FieldPosition : Vector2.zero;
+        return Vector2.zero;
     }
 
     private void AttachCamera(Transform target)
