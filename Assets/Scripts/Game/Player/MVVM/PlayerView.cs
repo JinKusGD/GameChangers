@@ -1,32 +1,25 @@
 using System;
 using System.ComponentModel;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class PlayerView : MonoBehaviour
 {
-    private const float ArrivalDistance = 1.2f;
-
     [Header("Visual")]
     [SerializeField] private Transform _model;
     [SerializeField] private Animator _animator;
     [SerializeField] private PlayerAnimationEvents _animationEvents;
 
-    [Header("Field")]
-    [SerializeField, FormerlySerializedAs("_stageField")] private BlockField _blockField;
-
     private readonly SkillRunner _skillRunner = new SkillRunner();
 
     private PlayerContext _context;
     private PlayerViewModel _playerViewModel;
+    private GameManager _gameManager;
 
     public event Action AttackHit;
 
     public bool CanPlayAttackAnimation => _animator != null;
 
     public Block Target => _context?.Movement.Target;
-
-    public BlockField BlockField => _blockField;
 
     public PlayerState CurrentState => _context?.StateMachine.CurrentState;
 
@@ -37,7 +30,6 @@ public class PlayerView : MonoBehaviour
         hasAllReferences &= UnityUtility.CheckReference(_model, nameof(_model), this);
         hasAllReferences &= UnityUtility.CheckReference(_animator, nameof(_animator), this);
         hasAllReferences &= UnityUtility.CheckReference(_animationEvents, nameof(_animationEvents), this);
-        hasAllReferences &= UnityUtility.CheckReference(_blockField, nameof(_blockField), this);
 
         enabled = hasAllReferences;
 
@@ -48,7 +40,7 @@ public class PlayerView : MonoBehaviour
 
         _playerViewModel = new PlayerViewModel();
 
-        PlayerMovement movement = new PlayerMovement(transform, _model, _blockField, _playerViewModel.MoveSpeed, ArrivalDistance);
+        PlayerMovement movement = new PlayerMovement(transform, _model, _playerViewModel.MoveSpeed);
         PlayerAnimation animation = new PlayerAnimation(_animator);
 
         _context = new PlayerContext(movement, animation);
@@ -59,7 +51,7 @@ public class PlayerView : MonoBehaviour
     private void OnEnable()
     {
         _playerViewModel.PropertyChanged += OnPropertyChanged;
-        Refresh();
+        ApplyMoveSpeed();
     }
 
     private void OnDisable()
@@ -71,11 +63,26 @@ public class PlayerView : MonoBehaviour
 
     private void Start()
     {
+        _gameManager = GameManager.Instance;
+
+        if (_gameManager != null && _gameManager.Data != null)
+        {
+            _gameManager.Saving += OnSaving;
+            _gameManager.StageChanged += OnStageChanged;
+            RestorePosition(_gameManager.Data.StageSave);
+        }
+
         _context.StateMachine.ChangeState(_context.IdleState);
     }
 
     private void OnDestroy()
     {
+        if (_gameManager != null)
+        {
+            _gameManager.Saving -= OnSaving;
+            _gameManager.StageChanged -= OnStageChanged;
+        }
+
         _playerViewModel?.Dispose();
         _playerViewModel = null;
 
@@ -87,11 +94,9 @@ public class PlayerView : MonoBehaviour
 
     private void Update()
     {
-        float deltaTime = Time.deltaTime;
-
-        _context.Movement.RefreshTarget();
+        RefreshTarget();
         _context.StateMachine.OnUpdate();
-        _skillRunner.Tick(deltaTime);
+        _skillRunner.Tick(Time.deltaTime);
     }
 
     public void StartAttack(float attackInterval)
@@ -109,9 +114,18 @@ public class PlayerView : MonoBehaviour
         _skillRunner.Unregister(skill);
     }
 
-    private void Refresh()
+    private void RefreshTarget()
     {
-        ApplyMoveSpeed();
+        PlayerMovement movement = _context.Movement;
+
+        if (movement.NeedsTarget)
+        {
+            StageManager stageManager = StageManager.Instance;
+            movement.SetTarget(stageManager != null ? stageManager.FindNearest(transform.position) : null);
+            return;
+        }
+
+        movement.UpdateArrival();
     }
 
     private void ApplyMoveSpeed()
@@ -132,5 +146,22 @@ public class PlayerView : MonoBehaviour
     private void OnAttackHit()
     {
         AttackHit?.Invoke();
+    }
+
+    private void RestorePosition(StageSaveData stageSave)
+    {
+        if (!stageSave.TryGetPlayerPosition(out Vector2 savedPosition)) { return; }
+
+        transform.position = new Vector3(savedPosition.x, savedPosition.y, transform.position.z);
+    }
+
+    private void OnStageChanged()
+    {
+        _context.Movement.ClearTarget();
+    }
+
+    private void OnSaving()
+    {
+        _gameManager.Data.StageSave.SetPlayerPosition(transform.position);
     }
 }
