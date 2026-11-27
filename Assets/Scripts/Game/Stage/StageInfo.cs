@@ -3,17 +3,26 @@ using UnityEngine;
 
 public class StageInfo
 {
-    public string LayoutId { get; set; } = string.Empty;
-    public Vector2 FieldPosition { get; set; }
-    public Dictionary<int, string> BlockIdsByKey { get; set; } = new Dictionary<int, string>();
+    public string LayoutId { get; }
+    public string StageName { get; }
+    public Vector2 FieldPosition { get; }
+    public double HpMultiplier { get; }
+    public double GoldMultiplier { get; }
 
-    public string GetBlockId(int blockKey)
+    public IReadOnlyList<ChapterTraitData> ChapterTraits { get; }
+
+    private StageInfo(StageData stageData, ChapterData chapterData)
     {
-        if (BlockIdsByKey != null && BlockIdsByKey.TryGetValue(blockKey, out string blockId))
-        {
-            return blockId;
-        }
+        LayoutId = stageData.LayoutId;
+        StageName = stageData.StageName;
+        FieldPosition = stageData.FieldPosition.ToVector2();
+        HpMultiplier = chapterData.HpMultiplier;
+        GoldMultiplier = chapterData.GoldMultiplier;
+        ChapterTraits = chapterData.Traits;
+    }
 
-        return null;
+    public static StageInfo Create(StageData stageData, ChapterData chapterData)
+    {
+        return new StageInfo(stageData, chapterData);
     }
 }

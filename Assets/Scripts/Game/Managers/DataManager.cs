@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public sealed class DataManager
@@ -19,15 +22,74 @@ public sealed class DataManager
 
     public BlockTable Blocks { get; } = new BlockTable();
     public BlockLayoutTable BlockLayouts { get; } = new BlockLayoutTable();
+    public ChapterTable Chapters { get; } = new ChapterTable();
     public StageTable Stages { get; } = new StageTable();
+
+    private const string Tag = "DataManager";
 
     private DataManager() { }
 
-    public void Load()
+    public async UniTask LoadAsync(IProgress<float> progress, CancellationToken token)
     {
-        Blocks.Load();
-        BlockLayouts.Load();
-        Stages.Load();
+        (string Name, UniTask Task)[] loads =
+        {
+            (nameof(Blocks), Blocks.LoadAsync(token)),
+            (nameof(BlockLayouts), BlockLayouts.LoadAsync(token)),
+            (nameof(Chapters), Chapters.LoadAsync(token)),
+            (nameof(Stages), Stages.LoadAsync(token)),
+        };
+
+        int loadedCount = 0;
+
+        async UniTask TrackAsync((string Name, UniTask Task) load)
+        {
+            await LoadSafelyAsync(load.Name, load.Task);
+            loadedCount++;
+            progress?.Report((float)loadedCount / loads.Length);
+        }
+
+        UniTask[] trackedLoads = new UniTask[loads.Length];
+
+        for (int i = 0; i < loads.Length; i++)
+        {
+            trackedLoads[i] = TrackAsync(loads[i]);
+        }
+
+        await UniTask.WhenAll(trackedLoads);
+
+        CheckReferences();
+    }
+
+    public StageInfo GetStageInfo(int chapter, int stage)
+    {
+        StageData stageData = Stages.Get(stage);
+        ChapterData chapterData = Chapters.Get(chapter);
+
+        if (stageData == null || chapterData == null) { return null; }
+
+        return StageInfo.Create(stageData, chapterData);
+    }
+
+    private static async UniTask LoadSafelyAsync(string tableName, UniTask loadTask)
+    {
+        try
+        {
+            await loadTask;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            DebugUtility.LogError($"[{Tag}] {tableName} 로드 중 예외: {e}");
+        }
+    }
+
+    private void CheckReferences()
+    {
+        Chapters.CheckBlockIds(Blocks);
+        Stages.CheckLayoutIds(BlockLayouts);
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

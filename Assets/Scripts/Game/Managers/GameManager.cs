@@ -11,10 +11,11 @@ public class GameManager : MonoBehaviour
 
     public GameData Data { get; private set; }
 
-    public int Chapter => Data.chapter;
-    public int Stage => Data.stage;
+    public int Chapter => Data.Chapter;
+    public int Stage => Data.Stage;
 
     public event Action StageChanged;
+    public event Action Saving;
 
     private void Awake()
     {
@@ -29,9 +30,6 @@ public class GameManager : MonoBehaviour
 
         Screen.orientation = ScreenOrientation.Portrait;
         Application.targetFrameRate = TargetFrameRate;
-
-        DataManager.Instance.Load();
-        LoadSaveData();
     }
 
     private void OnDestroy()
@@ -55,33 +53,48 @@ public class GameManager : MonoBehaviour
         Save();
     }
 
+    public void AddGold(double amount)
+    {
+        if (amount <= 0) { return; }
+
+        Data.Gold += amount;
+    }
+
     public void Save()
     {
         if (Data == null) { return; }
 
-        Data.lastSaveUtcTicks = DateTime.UtcNow.Ticks;
+        Saving?.Invoke();
+
+        Data.LastSaveUtcTicks = DateTime.UtcNow.Ticks;
         PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(Data));
         PlayerPrefs.Save();
     }
 
     public void ChangeStage(int chapter, int stage)
     {
-        Data.chapter = Mathf.Max(1, chapter);
-        Data.stage = Mathf.Max(1, stage);
+        Data.Chapter = Mathf.Max(1, chapter);
+        Data.Stage = Mathf.Max(1, stage);
+        Data.StageSave = new StageSaveData();
 
         StageChanged?.Invoke();
     }
 
-    private void LoadSaveData()
+    public void LoadSaveData()
     {
         Data = ReadSaveData();
 
-        Data.chapter = Mathf.Max(1, Data.chapter);
-        Data.stage = Mathf.Max(1, Data.stage);
+        Data.Chapter = Mathf.Max(1, Data.Chapter);
+        Data.Stage = Mathf.Max(1, Data.Stage);
 
-        if (Data.lastSaveUtcTicks > 0)
+        if (Data.StageSave == null)
         {
-            DateTime lastSaveTime = new DateTime(Data.lastSaveUtcTicks, DateTimeKind.Utc);
+            Data.StageSave = new StageSaveData();
+        }
+
+        if (Data.LastSaveUtcTicks > 0)
+        {
+            DateTime lastSaveTime = new DateTime(Data.LastSaveUtcTicks, DateTimeKind.Utc);
             double offlineSeconds = Math.Clamp((DateTime.UtcNow - lastSaveTime).TotalSeconds, 0, MaxOfflineSeconds);
 
             DebugUtility.Log($"[GameManager] 오프라인 시간: {offlineSeconds:F0}초");
