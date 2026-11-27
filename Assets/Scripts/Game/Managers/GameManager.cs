@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    private const string Tag = "GameManager";
     private const int TargetFrameRate = 60;
     private const double MaxOfflineSeconds = 3600;
 
@@ -64,7 +65,7 @@ public class GameManager : MonoBehaviour
 
         if (OfflineSeconds > 0)
         {
-            DebugUtility.Log($"[GameManager] 오프라인 시간: {OfflineSeconds:F0}초");
+            DebugUtility.Log($"[{Tag}] 오프라인 시간: {OfflineSeconds:F0}초");
         }
     }
 

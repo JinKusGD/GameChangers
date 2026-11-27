@@ -6,6 +6,7 @@ using UnityEngine.Serialization;
 [RequireComponent(typeof(CinemachinePositionComposer))]
 public class CameraController : MonoBehaviour
 {
+    private const string Tag = "CameraController";
     private const float UiCoverOffsetFactor = 0.5f;
 
     [SerializeField, Range(0f, 0.9f), FormerlySerializedAs("bottomUiRatio")] private float _bottomUiRatio = 0.1f;
@@ -32,7 +33,7 @@ public class CameraController : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            DebugUtility.LogWarning("[CameraController] 이미 메인 카메라가 있어서 이 컴포넌트는 꺼집니다.", this);
+            DebugUtility.LogWarning($"[{Tag}] 이미 메인 카메라가 있어서 이 컴포넌트는 꺼집니다.", this);
             enabled = false;
             return;
         }

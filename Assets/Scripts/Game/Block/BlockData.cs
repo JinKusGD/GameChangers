@@ -8,6 +8,8 @@ using UnityEngine.AddressableAssets;
 
 public class BlockData : IValidatable
 {
+    private const string Tag = "BlockData";
+
     public string Id { get; set; } = string.Empty;
     public int Key { get; set; }
     public double MaxHp { get; set; }
@@ -66,13 +68,13 @@ public class BlockData : IValidatable
         catch (Exception exception)
         {
             Sprite = null;
-            DebugUtility.LogWarning($"[BlockData] '{Id}': Addressable '{address}' 로드 실패. 기본 스프라이트를 씁니다. {exception.Message}");
+            DebugUtility.LogWarning($"[{Tag}] '{Id}': Addressable '{address}' 로드 실패. 기본 스프라이트를 씁니다. {exception.Message}");
             return;
         }
 
         if (Sprite == null)
         {
-            DebugUtility.LogWarning($"[BlockData] '{Id}': Addressable '{address}' 스프라이트가 없어 기본 스프라이트를 씁니다.");
+            DebugUtility.LogWarning($"[{Tag}] '{Id}': Addressable '{address}' 스프라이트가 없어 기본 스프라이트를 씁니다.");
         }
     }
 

@@ -5,6 +5,8 @@ using UnityEngine;
 
 public sealed class DataManager
 {
+    private const string Tag = "DataManager";
+
     private static DataManager _instance;
 
     public static DataManager Instance
@@ -24,8 +26,6 @@ public sealed class DataManager
     public BlockLayoutTable BlockLayouts { get; } = new BlockLayoutTable();
     public ChapterTable Chapters { get; } = new ChapterTable();
     public StageTable Stages { get; } = new StageTable();
-
-    private const string Tag = "DataManager";
 
     private DataManager() { }
 

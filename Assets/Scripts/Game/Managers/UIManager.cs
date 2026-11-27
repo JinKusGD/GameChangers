@@ -8,6 +8,8 @@ using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
+    private const string Tag = "UIManager";
+
     public static UIManager Instance { get; private set; }
 
     private readonly Dictionary<Type, UIView> _views = new Dictionary<Type, UIView>();
@@ -48,7 +50,7 @@ public class UIManager : MonoBehaviour
 
         if (instance == null)
         {
-            DebugUtility.LogError($"[UIManager] Addressable '{AddressKeys.UIRoot}' 을(를) 생성하지 못했습니다.", this);
+            DebugUtility.LogError($"[{Tag}] Addressable '{AddressKeys.UIRoot}' 을(를) 생성하지 못했습니다.", this);
             Addressables.Release(handle);
             return null;
         }
@@ -56,7 +58,7 @@ public class UIManager : MonoBehaviour
         
         if (!instance.TryGetComponent<UIRoot>(out var uiRoot))
         {
-            DebugUtility.LogError($"[UIManager] '{AddressKeys.UIRoot}' 프리팹에 UIRoot 컴포넌트가 없습니다.", this);
+            DebugUtility.LogError($"[{Tag}] '{AddressKeys.UIRoot}' 프리팹에 UIRoot 컴포넌트가 없습니다.", this);
             Addressables.ReleaseInstance(instance);
             return null;
         }
@@ -72,7 +74,7 @@ public class UIManager : MonoBehaviour
 
         if (root == null)
         {
-            DebugUtility.LogError($"[UIManager] UIRoot에 {canvasType} 루트가 연결되지 않았습니다.", this);
+            DebugUtility.LogError($"[{Tag}] UIRoot에 {canvasType} 루트가 연결되지 않았습니다.", this);
             return transform;
         }
 
@@ -161,7 +163,7 @@ public class UIManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            DebugUtility.LogError($"[UIManager] Addressable '{address}' 을(를) 생성하지 못했습니다: {e.Message}", this);
+            DebugUtility.LogError($"[{Tag}] Addressable '{address}' 을(를) 생성하지 못했습니다: {e.Message}", this);
         }
         finally
         {
@@ -188,7 +190,7 @@ public class UIManager : MonoBehaviour
 
         if (view == null)
         {
-            DebugUtility.LogError($"[UIManager] '{address}' 프리팹에 {type.Name} 컴포넌트가 없습니다.", this);
+            DebugUtility.LogError($"[{Tag}] '{address}' 프리팹에 {type.Name} 컴포넌트가 없습니다.", this);
             Addressables.ReleaseInstance(instance);
             return null;
         }
@@ -198,7 +200,7 @@ public class UIManager : MonoBehaviour
 
         if (!view.Create())
         {
-            DebugUtility.LogError($"[UIManager] {type.Name} 초기화에 실패해 생성을 취소합니다.", this);
+            DebugUtility.LogError($"[{Tag}] {type.Name} 초기화에 실패해 생성을 취소합니다.", this);
             Addressables.ReleaseInstance(instance);
             return null;
         }

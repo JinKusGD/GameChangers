@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 
 public class BootLoader : MonoBehaviour, IProgress<float>
 {
+    private const string Tag = "BootLoader";
     private const float SceneLoadedProgress = 0.9f;
     private const float DataWeight = 0.4f;
     private const float SaveWeight = 0.1f;
@@ -26,7 +27,7 @@ public class BootLoader : MonoBehaviour, IProgress<float>
     {
         if (GameManager.Instance == null)
         {
-            DebugUtility.LogError("[BootLoader] GameManager가 없습니다.", this);
+            DebugUtility.LogError($"[{Tag}] GameManager가 없습니다.", this);
             return;
         }
 
@@ -70,7 +71,7 @@ public class BootLoader : MonoBehaviour, IProgress<float>
 
         if (uiManager == null)
         {
-            DebugUtility.LogError("[BootLoader] UIManager가 없어 UI를 미리 생성하지 않습니다.", this);
+            DebugUtility.LogError($"[{Tag}] UIManager가 없어 UI를 미리 생성하지 않습니다.", this);
             return;
         }
 

@@ -5,6 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class Block : MonoBehaviour
 {
+    private const string Tag = "Block";
     private const double MinDamageTakenMultiplier = 0.1;
 
     private SpriteRenderer _spriteRenderer;
@@ -58,7 +59,7 @@ public class Block : MonoBehaviour
 
         if (stageBlock == null)
         {
-            DebugUtility.LogError($"[Block] {name}: StageBlock이 비어 있습니다.", this);
+            DebugUtility.LogError($"[{Tag}] {name}: StageBlock이 비어 있습니다.", this);
             return;
         }
 

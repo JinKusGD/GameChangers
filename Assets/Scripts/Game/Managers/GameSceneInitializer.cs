@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class GameSceneInitializer : MonoBehaviour
 {
+    private const string Tag = "GameSceneInitializer";
+
     [SerializeField] private PlayerView _playerPrefab;
 
     private void Start()
@@ -22,7 +24,7 @@ public class GameSceneInitializer : MonoBehaviour
 
         if (uiManager == null)
         {
-            DebugUtility.LogError("[GameSceneInitializer] UIManager가 없어 HUD를 표시하지 않습니다.");
+            DebugUtility.LogError($"[{Tag}] UIManager가 없어 HUD를 표시하지 않습니다.");
             return;
         }
 
@@ -64,7 +66,7 @@ public class GameSceneInitializer : MonoBehaviour
 
         if (cameraController == null)
         {
-            DebugUtility.LogError("[GameSceneInitializer] CameraController가 없어 카메라가 플레이어를 따라가지 않습니다.", this);
+            DebugUtility.LogError($"[{Tag}] CameraController가 없어 카메라가 플레이어를 따라가지 않습니다.", this);
             return;
         }
 

@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class StageManager : MonoBehaviour
 {
+    private const string Tag = "StageManager";
     private const float NextStageDelay = 1f;
 
     [SerializeField] private BlockField _blockField;
@@ -20,7 +21,7 @@ public class StageManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            DebugUtility.LogError("[StageManager] 씬에 StageManager가 두 개 이상 있습니다.", this);
+            DebugUtility.LogError($"[{Tag}] 씬에 StageManager가 두 개 이상 있습니다.", this);
             Destroy(this);
             return;
         }

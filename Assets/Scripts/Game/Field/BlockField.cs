@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class BlockField : MonoBehaviour
 {
+    private const string Tag = "BlockField";
     private const float BlockWorldSize = 1f;
 
     [SerializeField] private Block _blockPrefab;
@@ -52,7 +53,7 @@ public class BlockField : MonoBehaviour
 
         if (_gameManager == null)
         {
-            DebugUtility.LogError("[BlockField] GameManager가 없습니다.", this);
+            DebugUtility.LogError($"[{Tag}] GameManager가 없습니다.", this);
             return;
         }
 
@@ -227,7 +228,7 @@ public class BlockField : MonoBehaviour
 
         if (AliveCount == 0)
         {
-            DebugUtility.LogError($"[BlockField] '{_layout.Id}' 레이아웃에 놓을 수 있는 블록이 없습니다. 블록 데이터를 확인하세요.", this);
+            DebugUtility.LogError($"[{Tag}] '{_layout.Id}' 레이아웃에 놓을 수 있는 블록이 없습니다. 블록 데이터를 확인하세요.", this);
             Clear();
         }
     }

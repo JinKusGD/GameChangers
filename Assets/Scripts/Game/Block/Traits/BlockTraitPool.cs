@@ -3,13 +3,15 @@ using UnityEngine;
 
 public static class BlockTraitPool
 {
+    private const string Tag = "BlockTrait";
+
     private static readonly Dictionary<BlockTraitType, Stack<BlockTrait>> Pools = new Dictionary<BlockTraitType, Stack<BlockTrait>>();
 
     public static BlockTrait Get(Block owner, BlockTraitData data)
     {
         if (data == null)
         {
-            DebugUtility.LogError("[BlockTrait] 특성 데이터가 비어 있습니다.");
+            DebugUtility.LogError($"[{Tag}] 특성 데이터가 비어 있습니다.");
             return null;
         }
 
@@ -17,7 +19,7 @@ public static class BlockTraitPool
 
         if (trait == null)
         {
-            DebugUtility.LogError($"[BlockTrait] 알 수 없는 특성입니다. ({data.Type})");
+            DebugUtility.LogError($"[{Tag}] 알 수 없는 특성입니다. ({data.Type})");
             return null;
         }
 

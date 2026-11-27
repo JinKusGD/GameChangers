@@ -3,6 +3,7 @@ using UnityEngine;
 
 public static class SaveStorage
 {
+    private const string Tag = "SaveStorage";
     private const string SaveKey = "ClearCat.Save";
 
     private static readonly JsonSerializerSettings SerializerSettings = CreateSerializerSettings();
@@ -27,7 +28,7 @@ public static class SaveStorage
         }
         catch (JsonException e)
         {
-            DebugUtility.LogWarning($"[SaveStorage] 저장 데이터를 읽지 못해 새로 시작합니다: {e.Message}");
+            DebugUtility.LogWarning($"[{Tag}] 저장 데이터를 읽지 못해 새로 시작합니다: {e.Message}");
         }
 
         return new GameData();
@@ -48,7 +49,7 @@ public static class SaveStorage
 
         settings.Error = (sender, e) =>
         {
-            DebugUtility.LogWarning($"[SaveStorage] {e.ErrorContext.Path} 값을 읽지 못해 기본값을 씁니다: {e.ErrorContext.Error.Message}");
+            DebugUtility.LogWarning($"[{Tag}] {e.ErrorContext.Path} 값을 읽지 못해 기본값을 씁니다: {e.ErrorContext.Error.Message}");
             e.ErrorContext.Handled = true;
         };
 
