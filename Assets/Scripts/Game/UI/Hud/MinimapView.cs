@@ -108,6 +108,11 @@ public class MinimapView : MonoBehaviour
     {
         if (_texture == null) { return; }
 
+        if (_mapImage != null)
+        {
+            _mapImage.texture = null;
+        }
+
         Destroy(_texture);
         _texture = null;
         _pixels = null;
