@@ -1,0 +1,12 @@
+[
+  { "Stage": 1, "StageName": "슬라임", "LayoutId": "slime", "FieldPosition": { "x": 0, "y": 30 } },
+  { "Stage": 2, "StageName": "박쥐", "LayoutId": "bat", "FieldPosition": { "x": 0, "y": 90 } },
+  { "Stage": 3, "StageName": "고블린", "LayoutId": "goblin", "FieldPosition": { "x": 0, "y": 150 } },
+  { "Stage": 4, "StageName": "해골 병사", "LayoutId": "skeleton", "FieldPosition": { "x": 0, "y": 210 } },
+  { "Stage": 5, "StageName": "유령", "LayoutId": "ghost", "FieldPosition": { "x": 0, "y": 270 } },
+  { "Stage": 6, "StageName": "오크 전사", "LayoutId": "orc", "FieldPosition": { "x": 0, "y": 330 } },
+  { "Stage": 7, "StageName": "골렘", "LayoutId": "golem", "FieldPosition": { "x": 0, "y": 390 } },
+  { "Stage": 8, "StageName": "드래곤", "LayoutId": "dragon", "FieldPosition": { "x": 0, "y": 450 } },
+  { "Stage": 9, "StageName": "흑기사", "LayoutId": "dark_knight", "FieldPosition": { "x": 0, "y": 510 } },
+  { "Stage": 10, "StageName": "마왕", "LayoutId": "demon_king", "FieldPosition": { "x": 0, "y": 570 } }
+]

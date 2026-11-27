@@ -1,30 +1,41 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class BlockLayoutTable
 {
     private const string Tag = "BlockLayoutTable";
-    private const string ResourcePath = "Blocks/BlockLayouts";
 
-    private readonly Dictionary<string, BlockLayout> _layoutsById = new Dictionary<string, BlockLayout>();
+    private readonly Dictionary<string, BlockLayout> _layoutsById = new Dictionary<string, BlockLayout>(StringComparer.OrdinalIgnoreCase);
+    private readonly List<string> _errors = new List<string>();
 
-    public void Load()
+    public async UniTask LoadAsync(CancellationToken token)
     {
         _layoutsById.Clear();
 
-        List<BlockLayout> rows = JsonTableLoader.Load<BlockLayout>(ResourcePath, Tag, DescribeRow);
+        AsyncOperationHandle<IList<Texture2D>> handle = Addressables.LoadAssetsAsync<Texture2D>(AddressKeys.BlockLayoutLabel, null);
 
-        foreach (BlockLayout layout in rows)
+        try
         {
-            if (!_layoutsById.TryAdd(layout.Id, layout))
-            {
-                DebugUtility.LogError($"[{Tag}] {DescribeRow(layout)} 제외됨: Id 중복");
-            }
+            IList<Texture2D> textures = await LoadTexturesAsync(handle, token);
+
+            if (textures == null) { return; }
+
+            AddLayouts(textures);
+        }
+        finally
+        {
+            ReleaseHandle(handle);
         }
     }
 
     public BlockLayout GetById(string id)
     {
-        if (id == null || !_layoutsById.TryGetValue(id, out BlockLayout layout))
+        if (!TryGetById(id, out BlockLayout layout))
         {
             DebugUtility.LogError($"[{Tag}] Id '{id}' 레이아웃이 없습니다.");
             return null;
@@ -33,8 +44,85 @@ public class BlockLayoutTable
         return layout;
     }
 
-    private static string DescribeRow(BlockLayout layout)
+    public bool TryGetById(string id, out BlockLayout layout)
     {
-        return $"'{layout.Id}'";
+        layout = null;
+
+        if (string.IsNullOrEmpty(id)) { return false; }
+
+        return _layoutsById.TryGetValue(id, out layout);
+    }
+
+    private static async UniTask<IList<Texture2D>> LoadTexturesAsync(AsyncOperationHandle<IList<Texture2D>> handle, CancellationToken token)
+    {
+        try
+        {
+            return await handle.ToUniTask(cancellationToken: token);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            DebugUtility.LogError($"[{Tag}] '{AddressKeys.BlockLayoutLabel}' 레이블 이미지를 불러오지 못했습니다: {e.Message}");
+            return null;
+        }
+    }
+
+    private void AddLayouts(IList<Texture2D> textures)
+    {
+        foreach (Texture2D texture in textures)
+        {
+            TryAddLayout(texture);
+        }
+
+        if (_layoutsById.Count == 0)
+        {
+            DebugUtility.LogError($"[{Tag}] 사용할 수 있는 레이아웃이 하나도 없습니다. (불러온 이미지 {textures.Count}개)");
+        }
+    }
+
+    private void TryAddLayout(Texture2D texture)
+    {
+        if (texture == null)
+        {
+            DebugUtility.LogError($"[{Tag}] null 이미지 제외됨");
+            return;
+        }
+
+        try
+        {
+            AddLayout(texture);
+        }
+        catch (Exception e)
+        {
+            DebugUtility.LogError($"[{Tag}] '{texture.name}' 제외됨: {e.Message}");
+        }
+    }
+
+    private void AddLayout(Texture2D texture)
+    {
+        _errors.Clear();
+
+        BlockLayout layout = BlockLayout.Create(texture, _errors);
+
+        if (layout == null)
+        {
+            DebugUtility.LogError($"[{Tag}] '{texture.name}' 제외됨: {string.Join(", ", _errors)}");
+            return;
+        }
+
+        if (!_layoutsById.TryAdd(layout.Id, layout))
+        {
+            DebugUtility.LogError($"[{Tag}] '{layout.Id}' 제외됨: Id 중복");
+        }
+    }
+
+    private static void ReleaseHandle(AsyncOperationHandle<IList<Texture2D>> handle)
+    {
+        if (!handle.IsValid()) { return; }
+
+        Addressables.Release(handle);
     }
 }

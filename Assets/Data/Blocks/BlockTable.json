@@ -1,0 +1,19 @@
+[
+  { "Id": "gray", "Key": 1, "MaxHp": 10, "Gold": 1, "SpriteName": "", "ColorHex": "#8C8580" },
+  { "Id": "orange", "Key": 2, "MaxHp": 16, "Gold": 2, "SpriteName": "", "ColorHex": "#CC7A47",
+    "Traits": [ { "Type": "Shield", "Params": { "Hits": 1, "GoldBonus": 20 } } ] },
+  { "Id": "yellow", "Key": 3, "MaxHp": 26, "Gold": 3, "SpriteName": "", "ColorHex": "#F2CC40",
+    "Traits": [ { "Type": "Treasure", "Params": { "GoldBonus": 100 } } ] },
+  { "Id": "skyblue", "Key": 4, "MaxHp": 41, "Gold": 5, "SpriteName": "", "ColorHex": "#73CCF2",
+    "Traits": [ { "Type": "Regen", "Params": { "Interval": 3, "Rate": 0.05, "GoldBonus": 20 } } ] },
+  { "Id": "purple", "Key": 5, "MaxHp": 66, "Gold": 8, "SpriteName": "", "ColorHex": "#B373E6",
+    "Traits": [ { "Type": "Split", "BlockId": "gray" } ] },
+  { "Id": "green", "Key": 6, "MaxHp": 105, "Gold": 13, "SpriteName": "", "ColorHex": "#66D973",
+    "Traits": [ { "Type": "Link", "Params": { "GoldBonus": 20 } } ] },
+  { "Id": "pink", "Key": 7, "MaxHp": 168, "Gold": 21, "SpriteName": "", "ColorHex": "#F2738C",
+    "Traits": [ { "Type": "Guardian", "Params": { "Percent": 30, "GoldBonus": 50 } } ] },
+  { "Id": "blue", "Key": 8, "MaxHp": 268, "Gold": 34, "SpriteName": "", "ColorHex": "#4D66D9",
+    "Traits": [ { "Type": "Armor", "Params": { "Percent": 40, "GoldBonus": 30 } } ] },
+  { "Id": "black", "Key": 9, "MaxHp": 429, "Gold": 55, "SpriteName": "", "ColorHex": "#262626",
+    "Traits": [ { "Type": "DamageCap", "Params": { "Percent": 5, "GoldBonus": 50 } } ] }
+]

@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Data
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Data
+  m_GUID: 30a21afbaeb16a541a46c933b229d324
+  m_SerializeEntries:
+  - m_GUID: 1c5de97924d94e242a7d7c094288d648
+    m_Address: Blocks/Layouts/skeleton
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1cef7ea846305254ea28c67e540194fc
+    m_Address: Blocks/Layouts/demon_king
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 303a03194d151974ab50317bd171c6ea
+    m_Address: Blocks/Layouts/orc
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 431243f4900290e4c9df92ec74d6f08c
+    m_Address: Data/StageTable
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 78d274f11e1c1154a9c67c2dfda717a7
+    m_Address: Data/ChapterTable
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 877727320d951ec45bd91f0e8d9955ce
+    m_Address: Blocks/Layouts/goblin
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b6d5ef2e4fb0fb45a0ddb55e4e0b8b4
+    m_Address: Data/BlockTable
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be83772641d0b5b429f40c0204bc2d52
+    m_Address: Blocks/Layouts/ghost
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cf5f07c1cc7805948bad3d933bd459bd
+    m_Address: Blocks/Layouts/slime
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d33655c06f336114eaec041891333ed7
+    m_Address: Blocks/Layouts/dragon
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: de7385f3b5d4a204b8b1fd04377a77e8
+    m_Address: Blocks/Layouts/dark_knight
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e164fb4ed993b794b979c8aee054670c
+    m_Address: Blocks/Layouts/bat
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ef72ce2177c37324792ab2284f0678f9
+    m_Address: Blocks/Layouts/golem
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - BlockLayout
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 6ee65e303769f06499c261502c4c7746, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 7837532a0c467c74d9ddd6f63d5e3e3b, type: 2}
+    - {fileID: 11400000, guid: a44d30eb4085fd4479946cbf4a0768d7, type: 2}

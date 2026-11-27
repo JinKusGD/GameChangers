@@ -1,19 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public static class JsonTableLoader
 {
-    public static List<T> Load<T>(string resourcePath, string tag, Func<T, string> describe) where T : class, IValidatable
+    public static async UniTask<List<T>> LoadAsync<T>(string address, string tag, Func<T, string> describe, CancellationToken token) where T : class, IValidatable
     {
         List<T> rows = new List<T>();
 
-        TextAsset asset = Resources.Load<TextAsset>(resourcePath);
+        string json = await LoadTextAsync(address, tag, token);
 
-        if (asset == null)
+        if (json == null)
         {
-            DebugUtility.LogError($"[{tag}] Resources/{resourcePath}.json 을 찾을 수 없습니다.");
             return rows;
         }
 
@@ -21,7 +24,7 @@ public static class JsonTableLoader
 
         try
         {
-            parsedRows = JsonConvert.DeserializeObject<List<T>>(asset.text, CreateSerializerSettings(tag));
+            parsedRows = JsonConvert.DeserializeObject<List<T>>(json, CreateSerializerSettings(tag));
         }
         catch (JsonException e)
         {
@@ -51,6 +54,33 @@ public static class JsonTableLoader
         }
 
         return rows;
+    }
+
+    private static async UniTask<string> LoadTextAsync(string address, string tag, CancellationToken token)
+    {
+        AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(address);
+
+        try
+        {
+            TextAsset asset = await handle.ToUniTask(cancellationToken: token);
+            return asset != null ? asset.text : null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            DebugUtility.LogError($"[{tag}] Addressable '{address}' 을(를) 불러오지 못했습니다: {e.Message}");
+            return null;
+        }
+        finally
+        {
+            if (handle.IsValid())
+            {
+                Addressables.Release(handle);
+            }
+        }
     }
 
     private static JsonSerializerSettings CreateSerializerSettings(string tag)

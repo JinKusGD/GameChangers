@@ -1,0 +1,24 @@
+[
+  {
+    "Chapter": 1,
+    "HpMultiplier": 1,
+    "GoldMultiplier": 1,
+    "Traits": []
+  },
+  {
+    "Chapter": 2,
+    "HpMultiplier": 8,
+    "GoldMultiplier": 6,
+    "Traits": [
+      { "Type": "Armor", "BlockIds": ["blue", "black"], "Params": { "Percent": 10 } }
+    ]
+  },
+  {
+    "Chapter": 3,
+    "HpMultiplier": 64,
+    "GoldMultiplier": 36,
+    "Traits": [
+      { "Type": "Armor", "BlockIds": [], "Params": { "Percent": 20 } }
+    ]
+  }
+]
