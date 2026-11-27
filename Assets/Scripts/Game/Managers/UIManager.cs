@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
@@ -11,6 +12,8 @@ public class UIManager : MonoBehaviour
 
     private readonly Dictionary<Type, UIView> _views = new Dictionary<Type, UIView>();
     private readonly Dictionary<Type, UniTask<UIView>> _loadingViews = new Dictionary<Type, UniTask<UIView>>();
+    private readonly Dictionary<Type, int> _ownerSceneHandles = new Dictionary<Type, int>();
+    private readonly List<Type> _releaseBuffer = new List<Type>();
 
     private UIRoot _uiRoot;
 
@@ -18,19 +21,22 @@ public class UIManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            DebugUtility.LogError("[UIManager] 씬에 UIManager가 두 개 이상 있습니다.", this);
-            Destroy(this);
+            Destroy(gameObject);
             return;
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
         _uiRoot = CreateUIRoot();
+
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
     }
 
     private void OnDestroy()
     {
         if (Instance != this) { return; }
 
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
         ReleaseAll();
         Instance = null;
     }
@@ -73,6 +79,13 @@ public class UIManager : MonoBehaviour
         return root;
     }
 
+    public async UniTask<bool> PreloadAsync<T>() where T : UIView
+    {
+        T view = await GetOrCreateAsync<T>();
+
+        return view != null;
+    }
+
     public async UniTask<T> ShowAsync<T>() where T : UIView
     {
         T view = await GetOrCreateAsync<T>();
@@ -80,6 +93,7 @@ public class UIManager : MonoBehaviour
         if (view == null) { return null; }
 
         view.Show();
+        RegisterOwnerScene(typeof(T), view);
         return view;
     }
 
@@ -110,6 +124,7 @@ public class UIManager : MonoBehaviour
         if (cachedView == null)
         {
             _views.Remove(typeof(T));
+            _ownerSceneHandles.Remove(typeof(T));
             return false;
         }
 
@@ -193,6 +208,47 @@ public class UIManager : MonoBehaviour
         return view;
     }
 
+    private void RegisterOwnerScene(Type type, UIView view)
+    {
+        if (view.Lifetime != UILifetime.Scene) { return; }
+
+        if (_ownerSceneHandles.ContainsKey(type)) { return; }
+
+        _ownerSceneHandles.Add(type, SceneManager.GetActiveScene().handle);
+    }
+
+    private void OnSceneUnloaded(Scene scene)
+    {
+        _releaseBuffer.Clear();
+
+        foreach (KeyValuePair<Type, int> owner in _ownerSceneHandles)
+        {
+            if (owner.Value == scene.handle)
+            {
+                _releaseBuffer.Add(owner.Key);
+            }
+        }
+
+        foreach (Type type in _releaseBuffer)
+        {
+            Release(type);
+        }
+    }
+
+    private void Release(Type type)
+    {
+        _ownerSceneHandles.Remove(type);
+
+        if (!_views.TryGetValue(type, out UIView view)) { return; }
+
+        _views.Remove(type);
+
+        if (view == null) { return; }
+
+        view.Hide();
+        Addressables.ReleaseInstance(view.gameObject);
+    }
+
     private void ReleaseAll()
     {
         foreach (UIView view in _views.Values)
@@ -204,6 +260,7 @@ public class UIManager : MonoBehaviour
         }
 
         _views.Clear();
+        _ownerSceneHandles.Clear();
 
         if (_uiRoot != null)
         {

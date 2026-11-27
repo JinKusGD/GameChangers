@@ -9,7 +9,8 @@ public class BootLoader : MonoBehaviour, IProgress<float>
     private const float SceneLoadedProgress = 0.9f;
     private const float DataWeight = 0.4f;
     private const float SaveWeight = 0.1f;
-    private const float SceneWeight = 0.5f;
+    private const float UIWeight = 0.1f;
+    private const float SceneWeight = 0.4f;
 
     [SerializeField]private LoadingView _loadingView;
 
@@ -29,7 +30,7 @@ public class BootLoader : MonoBehaviour, IProgress<float>
             return;
         }
 
-        _totalWeight = DataWeight + SaveWeight + SceneWeight;
+        _totalWeight = DataWeight + SaveWeight + UIWeight + SceneWeight;
         _completedWeight = 0f;
 
         _loadingView.ResetProgress();
@@ -39,6 +40,9 @@ public class BootLoader : MonoBehaviour, IProgress<float>
 
         GameManager.Instance.LoadSaveData();
         CompleteStage(SaveWeight);
+
+        await PreloadUIAsync();
+        CompleteStage(UIWeight);
 
         await LoadGameSceneAsync(token);
     }
@@ -58,6 +62,19 @@ public class BootLoader : MonoBehaviour, IProgress<float>
         }
 
         loadOperation.allowSceneActivation = true;
+    }
+
+    private async UniTask PreloadUIAsync()
+    {
+        UIManager uiManager = UIManager.Instance;
+
+        if (uiManager == null)
+        {
+            DebugUtility.LogError("[BootLoader] UIManager가 없어 UI를 미리 생성하지 않습니다.", this);
+            return;
+        }
+
+        await uiManager.PreloadAsync<HudView>();
     }
 
     public void Report(float dataRatio)

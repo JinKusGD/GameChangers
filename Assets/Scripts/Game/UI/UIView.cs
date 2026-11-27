@@ -3,8 +3,10 @@ using UnityEngine;
 public abstract class UIView : MonoBehaviour
 {
     [SerializeField] private UICanvasType _canvasType;
+    [SerializeField] private UILifetime _lifetime;
 
     public UICanvasType CanvasType => _canvasType;
+    public UILifetime Lifetime => _lifetime;
     public bool IsShown => gameObject.activeSelf;
 
     public bool Create()
