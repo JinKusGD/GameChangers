@@ -13,7 +13,6 @@ public class BlockGrid : IDisposable
 
     public int Size { get; }
     public int AliveCount => _alive.Count;
-    public int ChangeVersion { get; private set; }
 
     public event Action Changed;
 
@@ -162,7 +161,6 @@ public class BlockGrid : IDisposable
 
     private void MarkChanged()
     {
-        ChangeVersion++;
         Changed?.Invoke();
     }
 

@@ -23,7 +23,6 @@ public class BlockField : MonoBehaviour
 
     public int AliveCount => _grid.AliveCount;
     public int GridSize => _grid.Size;
-    public int ChangeVersion => _grid.ChangeVersion;
 
     public event Action AllBlocksBroken;
     public event Action BlocksChanged;

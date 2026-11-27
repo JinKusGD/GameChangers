@@ -14,8 +14,8 @@ public class StageManager : MonoBehaviour
 
     public int AliveCount => _blockField.AliveCount;
     public int GridSize => _blockField.GridSize;
-    public int ChangeVersion => _blockField.ChangeVersion;
 
+    public event Action BlocksChanged;
 
     private void Awake()
     {
@@ -70,6 +70,7 @@ public class StageManager : MonoBehaviour
     private void OnBlocksChanged()
     {
         ModelManager.Instance.StageModel.AliveBlockCount = _blockField.AliveCount;
+        BlocksChanged?.Invoke();
     }
 
     private void OnAllBlocksBroken()

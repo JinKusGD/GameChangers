@@ -27,7 +27,7 @@ public class HudView : UIView
     {
         if (_minimapView == null) { return; }
 
-        _minimapView.SetPlayer(player);
+        _minimapView.Bind(player);
     }
 
     protected override bool OnCreate()
