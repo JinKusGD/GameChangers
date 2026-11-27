@@ -1,6 +1,5 @@
 using System;
 
-// [블록 특성] 철벽(black): 한 번에 최대 HP의 Percent%까지만 피해를 받음
 public class DamageCapTrait : BlockTrait
 {
     private const string PercentKey = "Percent";

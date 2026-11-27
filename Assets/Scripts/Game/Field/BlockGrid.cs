@@ -15,6 +15,8 @@ public class BlockGrid : IDisposable
     public int AliveCount => _alive.Count;
     public int ChangeVersion { get; private set; }
 
+    public event Action Changed;
+
     public BlockGrid(int size)
     {
         Size = size;
@@ -82,7 +84,7 @@ public class BlockGrid : IDisposable
     {
         cell.Setup(stageBlock);
         MarkAlive(cell);
-        ChangeVersion++;
+        MarkChanged();
     }
 
     public void RemoveBlock(Block cell)
@@ -105,7 +107,7 @@ public class BlockGrid : IDisposable
     public void ResetAlive()
     {
         _alive.Clear();
-        ChangeVersion++;
+        MarkChanged();
     }
 
     public Block FindNearest(Vector2 gridPosition, float maxDistance)
@@ -154,8 +156,14 @@ public class BlockGrid : IDisposable
 
         if (isRemoved)
         {
-            ChangeVersion++;
+            MarkChanged();
         }
+    }
+
+    private void MarkChanged()
+    {
+        ChangeVersion++;
+        Changed?.Invoke();
     }
 
     private Block GetAliveCell(int slot)

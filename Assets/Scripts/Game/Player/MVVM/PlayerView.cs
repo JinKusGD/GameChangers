@@ -65,11 +65,11 @@ public class PlayerView : MonoBehaviour
     {
         _gameManager = GameManager.Instance;
 
-        if (_gameManager != null && _gameManager.Data != null)
+        if (_gameManager != null && _gameManager.IsLoaded)
         {
             _gameManager.Saving += OnSaving;
             _gameManager.StageChanged += OnStageChanged;
-            RestorePosition(_gameManager.Data.StageSave);
+            RestorePosition(_gameManager.StageSave);
         }
 
         _context.StateMachine.ChangeState(_context.IdleState);
@@ -162,6 +162,6 @@ public class PlayerView : MonoBehaviour
 
     private void OnSaving()
     {
-        _gameManager.Data.StageSave.SetPlayerPosition(transform.position);
+        _gameManager.StageSave.SetPlayerPosition(transform.position);
     }
 }

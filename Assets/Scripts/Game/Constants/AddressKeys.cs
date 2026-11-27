@@ -5,4 +5,6 @@ public static class AddressKeys
     public const string ChapterTable = "Data/ChapterTable";
     public const string StageTable = "Data/StageTable";
     public const string BlockSpritePrefix = "Blocks/Sprites/";
+    public const string UIPrefix = "UI/";
+    public const string UIRoot = "UI/UIRoot";
 }

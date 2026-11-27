@@ -25,6 +25,7 @@ public class BlockField : MonoBehaviour
     public int ChangeVersion => _grid.ChangeVersion;
 
     public event Action AllBlocksBroken;
+    public event Action BlocksChanged;
 
     private void Awake()
     {
@@ -59,7 +60,7 @@ public class BlockField : MonoBehaviour
         _gameManager.Saving += OnSaving;
 
         BuildCurrentStage();
-        _saveHandler.Load(_gameManager.Data.StageSave, _layout, _stageBlocks);
+        _saveHandler.Load(_gameManager.StageSave, _layout, _stageBlocks);
     }
 
     private void Update()
@@ -76,6 +77,7 @@ public class BlockField : MonoBehaviour
             _gameManager.Saving -= OnSaving;
         }
 
+        _grid.Changed -= OnGridChanged;
         _grid.Dispose();
     }
 
@@ -121,6 +123,11 @@ public class BlockField : MonoBehaviour
         return ToGridPosition(worldPosition) / _grid.Size;
     }
 
+    private void OnGridChanged()
+    {
+        BlocksChanged?.Invoke();
+    }
+
     private void OnStageChanged()
     {
         BuildCurrentStage();
@@ -128,12 +135,12 @@ public class BlockField : MonoBehaviour
 
     private void OnSaving()
     {
-        _saveHandler.Save(_gameManager.Data.StageSave, _layout, _stageBlocks);
+        _saveHandler.Save(_gameManager.StageSave, _layout, _stageBlocks);
     }
 
     private void OnCellBroken(Block cell)
     {
-        _gameManager.AddGold(cell.Gold);
+        ModelManager.Instance.CurrencyModel.AddGold(cell.Gold);
     }
 
     private void OnSplitRequested(Block cell, int splitBlockKey)
@@ -148,6 +155,7 @@ public class BlockField : MonoBehaviour
     private void CreateGrid()
     {
         _grid = new BlockGrid(BlockLayout.Size);
+        _grid.Changed += OnGridChanged;
 
         for (int row = 0; row < _grid.Size; row++)
         {
@@ -175,7 +183,8 @@ public class BlockField : MonoBehaviour
 
     private void BuildCurrentStage()
     {
-        StageInfo stageInfo = DataManager.Instance.GetStageInfo(_gameManager.Chapter, _gameManager.Stage);
+        StageModel stageModel = ModelManager.Instance.StageModel;
+        StageInfo stageInfo = DataManager.Instance.GetStageInfo(stageModel.Chapter, stageModel.Stage);
 
         Build(stageInfo);
     }

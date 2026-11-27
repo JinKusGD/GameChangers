@@ -5,8 +5,7 @@ using UnityEngine;
 [Serializable]
 public class StageSaveData
 {   
-    public bool HasPlayerPosition;
-    public Vector2 PlayerPosition;
+    public Vector2? PlayerPosition;
 
     public string LayoutId;
     public List<BlockSaveData> Blocks = new List<BlockSaveData>();
@@ -14,13 +13,17 @@ public class StageSaveData
     public void SetPlayerPosition(Vector2 position)
     {
         PlayerPosition = position;
-        HasPlayerPosition = true;
     }
 
     public bool TryGetPlayerPosition(out Vector2 position)
     {
-        position = PlayerPosition;
+        if (PlayerPosition.HasValue)
+        {
+            position = PlayerPosition.Value;
+            return true;
+        }
 
-        return HasPlayerPosition;
+        position = Vector2.zero;
+        return false;
     }
 }

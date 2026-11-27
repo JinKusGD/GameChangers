@@ -65,7 +65,6 @@ public class BlockFieldSaveHandler
 
         if (cell.TryGetShield(out ShieldTrait shield))
         {
-            data.HasShieldHits = true;
             data.ShieldHits = shield.RemainingHits;
         }
 
@@ -97,9 +96,9 @@ public class BlockFieldSaveHandler
 
     private static void RestoreShield(Block cell, BlockSaveData data)
     {
-        if (!data.HasShieldHits || !cell.TryGetShield(out ShieldTrait shield)) { return; }
+        if (!data.ShieldHits.HasValue || !cell.TryGetShield(out ShieldTrait shield)) { return; }
 
-        shield.RestoreHits(data.ShieldHits);
+        shield.RestoreHits(data.ShieldHits.Value);
     }
 
     private bool TryRestoreSplitBlock(Block cell, StageBlock stageBlock)

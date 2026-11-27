@@ -3,16 +3,17 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    private const string SaveKey = "ClearCat.Save";
     private const int TargetFrameRate = 60;
     private const double MaxOfflineSeconds = 3600;
 
     public static GameManager Instance { get; private set; }
 
-    public GameData Data { get; private set; }
+    private GameData _data;
 
-    public int Chapter => Data.Chapter;
-    public int Stage => Data.Stage;
+    public bool IsLoaded => _data != null;
+    public StageSaveData StageSave => _data.StageSave;
+
+    public double OfflineSeconds { get; private set; }
 
     public event Action StageChanged;
     public event Action Saving;
@@ -53,77 +54,87 @@ public class GameManager : MonoBehaviour
         Save();
     }
 
-    public void AddGold(double amount)
+    public void LoadSaveData()
     {
-        if (amount <= 0) { return; }
+        _data = SaveStorage.Load();
+        _data.Normalize();
 
-        Data.Gold += amount;
+        ApplyToModels();
+        OfflineSeconds = CalculateOfflineSeconds();
+
+        if (OfflineSeconds > 0)
+        {
+            DebugUtility.Log($"[GameManager] 오프라인 시간: {OfflineSeconds:F0}초");
+        }
     }
 
     public void Save()
     {
-        if (Data == null) { return; }
+        if (!IsLoaded) { return; }
 
         Saving?.Invoke();
 
-        Data.LastSaveUtcTicks = DateTime.UtcNow.Ticks;
-        PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(Data));
-        PlayerPrefs.Save();
+        CollectFromModels();
+        _data.LastSaveUtcTicks = DateTime.UtcNow.Ticks;
+
+        SaveStorage.Write(_data);
     }
 
     public void ChangeStage(int chapter, int stage)
     {
-        Data.Chapter = Mathf.Max(1, chapter);
-        Data.Stage = Mathf.Max(1, stage);
-        Data.StageSave = new StageSaveData();
+        ModelManager.Instance.StageModel.ChangeStage(chapter, stage);
+        _data.StageSave = new StageSaveData();
 
         StageChanged?.Invoke();
     }
 
-    public void LoadSaveData()
+    private void ApplyToModels()
     {
-        Data = ReadSaveData();
-
-        Data.Chapter = Mathf.Max(1, Data.Chapter);
-        Data.Stage = Mathf.Max(1, Data.Stage);
-
-        if (Data.StageSave == null)
-        {
-            Data.StageSave = new StageSaveData();
-        }
-
-        if (Data.LastSaveUtcTicks > 0)
-        {
-            DateTime lastSaveTime = new DateTime(Data.LastSaveUtcTicks, DateTimeKind.Utc);
-            double offlineSeconds = Math.Clamp((DateTime.UtcNow - lastSaveTime).TotalSeconds, 0, MaxOfflineSeconds);
-
-            DebugUtility.Log($"[GameManager] 오프라인 시간: {offlineSeconds:F0}초");
-        }
+        ApplyCurrencyToModel();
+        ApplyStageToModel();
     }
 
-    private static GameData ReadSaveData()
+    private void ApplyCurrencyToModel()
     {
-        string json = PlayerPrefs.GetString(SaveKey, string.Empty);
+        CurrencyModel currencyModel = ModelManager.Instance.CurrencyModel;
 
-        if (string.IsNullOrEmpty(json))
-        {
-            return new GameData();
-        }
+        currencyModel.Load(_data.Gold);
+    }
 
-        try
-        {
-            GameData data = JsonUtility.FromJson<GameData>(json);
+    private void ApplyStageToModel()
+    {
+        StageModel stageModel = ModelManager.Instance.StageModel;
 
-            if (data != null)
-            {
-                return data;
-            }
-        }
-        catch (ArgumentException e)
-        {
-            DebugUtility.LogWarning($"[GameManager] 저장 데이터를 읽지 못해 새로 시작합니다: {e.Message}");
-        }
+        stageModel.Load(_data.Chapter, _data.Stage);
+    }
 
-        return new GameData();
+    private void CollectFromModels()
+    {
+        CollectCurrencyFromModel();
+        CollectStageFromModel();
+    }
+
+    private void CollectCurrencyFromModel()
+    {
+        CurrencyModel currencyModel = ModelManager.Instance.CurrencyModel;
+
+        _data.Gold = currencyModel.Gold;
+    }
+
+    private void CollectStageFromModel()
+    {
+        StageModel stageModel = ModelManager.Instance.StageModel;
+
+        _data.Chapter = stageModel.Chapter;
+        _data.Stage = stageModel.Stage;
+    }
+
+    private double CalculateOfflineSeconds()
+    {
+        if (_data.LastSaveUtcTicks <= 0) { return 0; }
+
+        DateTime lastSaveTime = new DateTime(_data.LastSaveUtcTicks, DateTimeKind.Utc);
+
+        return Math.Clamp((DateTime.UtcNow - lastSaveTime).TotalSeconds, 0, MaxOfflineSeconds);
     }
 }

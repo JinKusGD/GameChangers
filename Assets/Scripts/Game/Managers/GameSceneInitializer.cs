@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class GameSceneInitializer : MonoBehaviour
@@ -10,13 +11,32 @@ public class GameSceneInitializer : MonoBehaviour
 
         PlayerView player = SpawnPlayer();
         AttachCamera(player.transform);
+        ShowHudAsync(player.transform).Forget();
 
         Destroy(gameObject);
+    }
+
+    private static async UniTask ShowHudAsync(Transform player)
+    {
+        UIManager uiManager = UIManager.Instance;
+
+        if (uiManager == null)
+        {
+            DebugUtility.LogError("[GameSceneInitializer] UIManager가 없어 HUD를 표시하지 않습니다.");
+            return;
+        }
+
+        HudView hudView = await uiManager.ShowAsync<HudView>();
+
+        if (hudView == null) { return; }
+
+        hudView.SetPlayer(player);
     }
 
     private PlayerView SpawnPlayer()
     {
         Transform prefabTransform = _playerPrefab.transform;
+
         Vector2 spawnPosition = GetSpawnPosition();
 
         Vector3 position = new Vector3(spawnPosition.x, spawnPosition.y, prefabTransform.position.z);
@@ -28,11 +48,12 @@ public class GameSceneInitializer : MonoBehaviour
     {
         GameManager gameManager = GameManager.Instance;
 
-        if (gameManager == null || gameManager.Data == null) { return Vector2.zero; }
+        if (gameManager == null || !gameManager.IsLoaded) { return Vector2.zero; }
 
-        if (gameManager.Data.StageSave.TryGetPlayerPosition(out Vector2 savedPosition)) { return savedPosition; }
+        if (gameManager.StageSave.TryGetPlayerPosition(out Vector2 savedPosition)) { return savedPosition; }
 
-        StageInfo stageInfo = DataManager.Instance.GetStageInfo(gameManager.Chapter, gameManager.Stage);
+        StageModel stageModel = ModelManager.Instance.StageModel;
+        StageInfo stageInfo = DataManager.Instance.GetStageInfo(stageModel.Chapter, stageModel.Stage);
 
         return stageInfo != null ? stageInfo.FieldPosition : Vector2.zero;
     }

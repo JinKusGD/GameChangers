@@ -15,6 +15,7 @@ public class StageManager : MonoBehaviour
     public int GridSize => _blockField.GridSize;
     public int ChangeVersion => _blockField.ChangeVersion;
 
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -32,6 +33,8 @@ public class StageManager : MonoBehaviour
 
         Instance = this;
         _blockField.AllBlocksBroken += OnAllBlocksBroken;
+        _blockField.BlocksChanged += OnBlocksChanged;
+        OnBlocksChanged();
     }
 
     private void OnDestroy()
@@ -39,6 +42,7 @@ public class StageManager : MonoBehaviour
         if (Instance != this) { return; }
 
         _blockField.AllBlocksBroken -= OnAllBlocksBroken;
+        _blockField.BlocksChanged -= OnBlocksChanged;
         Instance = null;
     }
 
@@ -62,6 +66,11 @@ public class StageManager : MonoBehaviour
         return _blockField.GetNormalizedPosition(worldPosition);
     }
 
+    private void OnBlocksChanged()
+    {
+        ModelManager.Instance.StageModel.AliveBlockCount = _blockField.AliveCount;
+    }
+
     private void OnAllBlocksBroken()
     {
         GoToNextStageAsync(this.GetCancellationTokenOnDestroy()).Forget();
@@ -80,7 +89,8 @@ public class StageManager : MonoBehaviour
 
         if (gameManager == null) { return; }
 
-        (int chapter, int stage) = GetNextStage(gameManager.Chapter, gameManager.Stage);
+        StageModel stageModel = ModelManager.Instance.StageModel;
+        (int chapter, int stage) = GetNextStage(stageModel.Chapter, stageModel.Stage);
 
         gameManager.ChangeStage(chapter, stage);
     }

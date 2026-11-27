@@ -1,38 +1,23 @@
 using System;
 
-public enum UpgradeType
-{
-    Damage,
-    MoveSpeed
-}
-
 [Serializable]
 public class GameData
 {
     public int Chapter = 1;
     public int Stage = 1;
-
     public double Gold;
-
     public long LastSaveUtcTicks;
 
     public StageSaveData StageSave = new StageSaveData();
 
-    public int GetUpgrade(UpgradeType type)
+    public void Normalize()
     {
-        switch (type)
-        { 
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type));
-        }
-    }
+        Chapter = Math.Max(1, Chapter);
+        Stage = Math.Max(1, Stage);
 
-    public void Upgrade(UpgradeType type)
-    {
-        switch (type)
+        if (StageSave == null)
         {
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type));
+            StageSave = new StageSaveData();
         }
     }
 }
