@@ -1,0 +1,22 @@
+[
+  {
+    "Id": "SwordAttack", "Name": "검 공격", "Prefab": "SwordAttack", "Icon": "SwordAttack",
+    "TargetMode": "PlayerTarget", "Cooldown": 1.0, "Range": 1.2, "AttackPowerMultiplier": 1.0,
+    "MaxLevel": 100,
+    "Cost": { "Base": 10, "Growth": 1.12 },
+    "Damage": { "Base": 1.0, "PerLevel": 0.1 },
+    "Mastery": { "BaseCount": 100, "Growth": 1.05 },
+    "Milestones": [
+      { "Level": 10, "DamageMultiplier": 2 },
+      { "Level": 20, "DamageMultiplier": 2 },
+      { "Level": 30, "DamageMultiplier": 2 },
+      { "Level": 40, "DamageMultiplier": 2 },
+      { "Level": 50, "DamageMultiplier": 2 },
+      { "Level": 60, "DamageMultiplier": 2 },
+      { "Level": 70, "DamageMultiplier": 2 },
+      { "Level": 80, "DamageMultiplier": 2 },
+      { "Level": 90, "DamageMultiplier": 2 },
+      { "Level": 100, "DamageMultiplier": 2 }
+    ]
+  }
+]
