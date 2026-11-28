@@ -45,12 +45,12 @@ public class UIManager : MonoBehaviour
 
     private UIRoot CreateUIRoot()
     {
-        AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(AddressKeys.UIRoot, transform, false);
+        AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(AddressKeys.UI.Root, transform, false);
         GameObject instance = handle.WaitForCompletion();
 
         if (instance == null)
         {
-            DebugUtility.LogError($"[{Tag}] Addressable '{AddressKeys.UIRoot}' 을(를) 생성하지 못했습니다.", this);
+            DebugUtility.LogError($"[{Tag}] Addressable '{AddressKeys.UI.Root}' 을(를) 생성하지 못했습니다.", this);
             Addressables.Release(handle);
             return null;
         }
@@ -58,7 +58,7 @@ public class UIManager : MonoBehaviour
         
         if (!instance.TryGetComponent<UIRoot>(out var uiRoot))
         {
-            DebugUtility.LogError($"[{Tag}] '{AddressKeys.UIRoot}' 프리팹에 UIRoot 컴포넌트가 없습니다.", this);
+            DebugUtility.LogError($"[{Tag}] '{AddressKeys.UI.Root}' 프리팹에 UIRoot 컴포넌트가 없습니다.", this);
             Addressables.ReleaseInstance(instance);
             return null;
         }
@@ -153,7 +153,7 @@ public class UIManager : MonoBehaviour
 
     private async UniTask<UIView> CreateAsync(Type type)
     {
-        string address = AddressKeys.UIPrefix + type.Name;
+        string address = AddressKeys.UI.Prefix + type.Name;
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, transform, false);
         GameObject instance = null;
 
