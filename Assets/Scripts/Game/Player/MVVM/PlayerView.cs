@@ -69,6 +69,7 @@ public class PlayerView : MonoBehaviour
         {
             _gameManager.Saving += OnSaving;
             _gameManager.StageChanged += OnStageChanged;
+            _gameManager.ChapterChanged += OnChapterChanged;
             RestorePosition(_gameManager.StageSave);
         }
 
@@ -81,6 +82,7 @@ public class PlayerView : MonoBehaviour
         {
             _gameManager.Saving -= OnSaving;
             _gameManager.StageChanged -= OnStageChanged;
+            _gameManager.ChapterChanged -= OnChapterChanged;
         }
 
         _playerViewModel?.Dispose();
@@ -153,6 +155,12 @@ public class PlayerView : MonoBehaviour
         if (!stageSave.TryGetPlayerPosition(out Vector2 savedPosition)) { return; }
 
         transform.position = new Vector3(savedPosition.x, savedPosition.y, transform.position.z);
+    }
+
+    private void OnChapterChanged()
+    {
+        _context.Movement.ClearTarget();
+        transform.position = new Vector3(0f, 0f, transform.position.z);
     }
 
     private void OnStageChanged()
