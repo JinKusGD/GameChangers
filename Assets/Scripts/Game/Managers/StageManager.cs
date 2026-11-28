@@ -6,9 +6,9 @@ using UnityEngine;
 public class StageManager : MonoBehaviour
 {
     private const string Tag = "StageManager";
-    private const float NextStageDelay = 1f;
 
     [SerializeField] private BlockField _blockField;
+    [SerializeField] private InfiniteBackground _background;
 
     public static StageManager Instance { get; private set; }
 
@@ -26,7 +26,12 @@ public class StageManager : MonoBehaviour
             return;
         }
 
-        if (!UnityUtility.CheckReference(_blockField, nameof(_blockField), this))
+        bool hasAllReferences = true;
+
+        hasAllReferences &= UnityUtility.CheckReference(_blockField, nameof(_blockField), this);
+        hasAllReferences &= UnityUtility.CheckReference(_background, nameof(_background), this);
+
+        if (!hasAllReferences)
         {
             enabled = false;
             return;
@@ -36,6 +41,11 @@ public class StageManager : MonoBehaviour
         _blockField.AllBlocksBroken += OnAllBlocksBroken;
         _blockField.BlocksChanged += OnBlocksChanged;
         OnBlocksChanged();
+    }
+
+    private void Start()
+    {
+        StartStageAsync(this.GetCancellationTokenOnDestroy()).Forget();
     }
 
     private void OnDestroy()
@@ -78,23 +88,69 @@ public class StageManager : MonoBehaviour
         GoToNextStageAsync(this.GetCancellationTokenOnDestroy()).Forget();
     }
 
-    private async UniTaskVoid GoToNextStageAsync(CancellationToken token)
+    private async UniTaskVoid StartStageAsync(CancellationToken token)
     {
-        await UniTask.Delay(TimeSpan.FromSeconds(NextStageDelay), cancellationToken: token);
+        UIManager uiManager = UIManager.Instance;
+        ScreenFader fader = uiManager != null ? await uiManager.ShowAsync<ScreenFader>() : null;
 
-        GoToNextStage();
+        if (fader != null)
+        {
+            fader.SetBlack();
+        }
+
+        await _background.ApplyStageAsync(ModelManager.Instance.StageModel.Stage, token);
+
+        if (fader != null)
+        {
+            await fader.FadeOutAsync(token);
+        }
     }
 
-    private void GoToNextStage()
+    private async UniTaskVoid GoToNextStageAsync(CancellationToken token)
     {
+        await UniTask.Delay(TimeSpan.FromSeconds(DataManager.Instance.Config.Stage.NextStageDelay), cancellationToken: token);
+
         GameManager gameManager = GameManager.Instance;
 
         if (gameManager == null) { return; }
 
         StageModel stageModel = ModelManager.Instance.StageModel;
-        (int chapter, int stage) = GetNextStage(stageModel.Chapter, stageModel.Stage);
+        int clearedChapter = stageModel.Chapter;
+        (int chapter, int stage) = GetNextStage(clearedChapter, stageModel.Stage);
+
+        UIManager uiManager = UIManager.Instance;
+        ScreenFader fader = uiManager != null ? await uiManager.ShowAsync<ScreenFader>() : null;
+
+        if (fader != null)
+        {
+            await fader.FadeInAsync(token);
+        }
 
         gameManager.ChangeStage(chapter, stage);
+        await _background.ApplyStageAsync(stage, token);
+
+        ChapterClearPopup popup = null;
+
+        if (chapter != clearedChapter && uiManager != null)
+        {
+            popup = await uiManager.ShowAsync<ChapterClearPopup>();
+
+            if (popup != null)
+            {
+                popup.Setup(clearedChapter, chapter, DataManager.Instance.Chapters.LastChapter);
+            }
+        }
+
+        if (fader != null)
+        {
+            await fader.FadeOutAsync(token);
+        }
+
+        if (popup == null) { return; }
+
+        await popup.WaitForCloseAsync(token);
+
+        uiManager.Hide<ChapterClearPopup>();
     }
 
     private static (int Chapter, int Stage) GetNextStage(int chapter, int stage)
