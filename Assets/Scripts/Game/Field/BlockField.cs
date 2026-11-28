@@ -191,7 +191,7 @@ public class BlockField : MonoBehaviour
 
     private void Build(StageInfo stageInfo)
     {
-        _layout = stageInfo != null ? DataManager.Instance.BlockLayouts.GetById(stageInfo.LayoutId) : null;
+        _layout = GetLayout(stageInfo);
 
         if (_layout == null)
         {
@@ -230,6 +230,22 @@ public class BlockField : MonoBehaviour
             DebugUtility.LogError($"[{Tag}] '{_layout.Id}' 레이아웃에 놓을 수 있는 블록이 없습니다. 블록 데이터를 확인하세요.", this);
             Clear();
         }
+    }
+
+    private static BlockLayout GetLayout(StageInfo stageInfo)
+    {
+        if (stageInfo == null) { return null; }
+
+        string layoutId = stageInfo.LayoutId;
+
+#if UNITY_EDITOR
+        if (DebugStageOverride.IsSingleBlockEnabled)
+        {
+            layoutId = DebugStageOverride.SingleBlockLayoutId;
+        }
+#endif
+
+        return DataManager.Instance.BlockLayouts.GetById(layoutId);
     }
 
     private void CheckAllBlocksBroken()
