@@ -75,6 +75,7 @@ public class BootLoader : MonoBehaviour, IProgress<float>
             return;
         }
 
+        await uiManager.PreloadAsync<ScreenFader>();
         await uiManager.PreloadAsync<HudView>();
     }
 

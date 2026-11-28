@@ -7,6 +7,7 @@ public class StageData : IValidatable
     public string StageName { get; set; } = string.Empty;
     public string LayoutId { get; set; } = string.Empty;
     public FieldPositionData FieldPosition { get; set; }
+    public string Background { get; set; } = string.Empty;
 
     public List<string> Validate()
     {

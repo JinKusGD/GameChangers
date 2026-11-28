@@ -17,7 +17,7 @@ public class BlockLayoutTable
     {
         _layoutsById.Clear();
 
-        AsyncOperationHandle<IList<Texture2D>> handle = Addressables.LoadAssetsAsync<Texture2D>(AddressKeys.BlockLayoutLabel, null);
+        AsyncOperationHandle<IList<Texture2D>> handle = Addressables.LoadAssetsAsync<Texture2D>(AddressKeys.Labels.BlockLayout, null);
 
         try
         {
@@ -78,7 +78,7 @@ public class BlockLayoutTable
         }
         catch (Exception e)
         {
-            DebugUtility.LogError($"[{Tag}] '{AddressKeys.BlockLayoutLabel}' 레이블 이미지를 불러오지 못했습니다: {e.Message}");
+            DebugUtility.LogError($"[{Tag}] '{AddressKeys.Labels.BlockLayout}' 레이블 이미지를 불러오지 못했습니다: {e.Message}");
             return null;
         }
     }

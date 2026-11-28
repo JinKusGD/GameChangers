@@ -55,7 +55,7 @@ public class BlockData : IValidatable
     {
         if (string.IsNullOrEmpty(SpriteName)) { return; }
 
-        string address = AddressKeys.BlockSpritePrefix + SpriteName;
+        string address = AddressKeys.Sprites.BlockPrefix + SpriteName;
 
         try
         {

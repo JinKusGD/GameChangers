@@ -13,7 +13,7 @@ public class StageTable
     {
         _dataByStage.Clear();
 
-        List<StageData> rows = await JsonTableLoader.LoadAsync<StageData>(AddressKeys.StageTable, Tag, DescribeRow, token);
+        List<StageData> rows = await JsonTableLoader.LoadAsync<StageData>(AddressKeys.Data.StageTable, Tag, DescribeRow, token);
 
         foreach (StageData data in rows)
         {

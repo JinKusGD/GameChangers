@@ -1,0 +1,19 @@
+{
+  "Offline": {
+    "MaxSeconds": 3600
+  },
+  "Stage": {
+    "OverflowHpMultiplier": 8,
+    "OverflowGoldMultiplier": 6,
+    "NextStageDelay": 1
+  },
+  "Block": {
+    "MinDamageTakenMultiplier": 0.1
+  },
+  "SkillUnlock": {
+    "InitialMaxCount": 3,
+    "ChoiceCount": 2,
+    "Costs": [100, 600, 5000, 50000, 400000, 3000000],
+    "CostGrowthAfterList": 6
+  }
+}

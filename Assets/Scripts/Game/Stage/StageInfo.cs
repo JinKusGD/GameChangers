@@ -4,9 +4,6 @@ using UnityEngine;
 
 public class StageInfo
 {
-    private const double OverflowHpMultiplier = 8;
-    private const double OverflowGoldMultiplier = 6;
-
     public string LayoutId { get; }
     public string StageName { get; }
     public Vector2 FieldPosition { get; }
@@ -21,8 +18,9 @@ public class StageInfo
         StageName = stageData.StageName;
         FieldPosition = stageData.FieldPosition.ToVector2();
 
-        HpMultiplier = chapterData.HpMultiplier * Math.Pow(OverflowHpMultiplier, overflowChapters);
-        GoldMultiplier = chapterData.GoldMultiplier * Math.Pow(OverflowGoldMultiplier, overflowChapters);
+        StageConfig config = DataManager.Instance.Config.Stage;
+        HpMultiplier = chapterData.HpMultiplier * Math.Pow(config.OverflowHpMultiplier, overflowChapters);
+        GoldMultiplier = chapterData.GoldMultiplier * Math.Pow(config.OverflowGoldMultiplier, overflowChapters);
         ChapterTraits = chapterData.Traits;
     }
 

@@ -16,7 +16,7 @@ public class ChapterTable
         _dataByChapter.Clear();
         LastChapter = 0;
 
-        List<ChapterData> rows = await JsonTableLoader.LoadAsync<ChapterData>(AddressKeys.ChapterTable, Tag, DescribeRow, token);
+        List<ChapterData> rows = await JsonTableLoader.LoadAsync<ChapterData>(AddressKeys.Data.ChapterTable, Tag, DescribeRow, token);
 
         foreach (ChapterData data in rows)
         {

@@ -6,7 +6,6 @@ using UnityEngine;
 public class Block : MonoBehaviour
 {
     private const string Tag = "Block";
-    private const double MinDamageTakenMultiplier = 0.1;
 
     private SpriteRenderer _spriteRenderer;
     private readonly List<BlockTrait> _traits = new List<BlockTrait>();
@@ -139,7 +138,7 @@ public class Block : MonoBehaviour
     {
         double multiplier = _damageTakenMultiplier * (1 - guardPercent / 100);
 
-        return Math.Max(multiplier, MinDamageTakenMultiplier);
+        return Math.Max(multiplier, DataManager.Instance.Config.Block.MinDamageTakenMultiplier);
     }
 
     private double ModifyDamage(double damage)

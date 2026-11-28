@@ -15,6 +15,8 @@ public class CameraController : MonoBehaviour
     private CinemachineCamera _virtualCamera;
     private CinemachinePositionComposer _composer;
 
+    private GameManager _gameManager;
+
     public static CameraController Instance { get; private set; }
 
     public CinemachineCamera VirtualCamera => _virtualCamera;
@@ -47,12 +49,39 @@ public class CameraController : MonoBehaviour
         ApplyTarget();
     }
 
+    private void Start()
+    {
+        _gameManager = GameManager.Instance;
+
+        if (_gameManager != null)
+        {
+            _gameManager.ChapterChanged += OnChapterChanged;
+        }
+    }
+
     private void OnDestroy()
     {
+        if (_gameManager != null)
+        {
+            _gameManager.ChapterChanged -= OnChapterChanged;
+        }
+
         if (Instance == this)
         {
             Instance = null;
         }
+    }
+
+    private void OnChapterChanged()
+    {
+        SnapToTarget();
+    }
+
+    private void SnapToTarget()
+    {
+        if (_virtualCamera == null) { return; }
+
+        _virtualCamera.PreviousStateIsValid = false;
     }
 
     private void ApplyTarget()

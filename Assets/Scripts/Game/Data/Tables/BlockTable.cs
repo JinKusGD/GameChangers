@@ -15,7 +15,7 @@ public class BlockTable
     {
         Clear();
 
-        List<BlockData> rows = await JsonTableLoader.LoadAsync<BlockData>(AddressKeys.BlockTable, Tag, DescribeRow, token);
+        List<BlockData> rows = await JsonTableLoader.LoadAsync<BlockData>(AddressKeys.Data.BlockTable, Tag, DescribeRow, token);
 
         RegisterRows(rows);
         CheckSplitTargets();
