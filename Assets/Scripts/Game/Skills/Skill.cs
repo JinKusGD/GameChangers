@@ -3,12 +3,14 @@ using UnityEngine;
 
 public enum SkillTargetMode
 {
-    Nearest,
-    PlayerTarget
+    PlayerTarget,
+    Nearest
 }
 
 public abstract class Skill : MonoBehaviour
 {
+    private const string Tag = "Skill";
+
     private float _cooldownRemaining;
 
     protected abstract string DisplayName { get; }
@@ -19,6 +21,7 @@ public abstract class Skill : MonoBehaviour
     public float CooldownRemaining => Mathf.Max(0f, _cooldownRemaining);
     public float CooldownRatio => Cooldown > 0f ? Mathf.Clamp01(_cooldownRemaining / Cooldown) : 0f;
     public bool IsReady => _cooldownRemaining <= 0f;
+    public virtual double DamagePerSecond => 0;
 
     public event Action<Skill, Block> Used;
 
@@ -30,7 +33,7 @@ public abstract class Skill : MonoBehaviour
 
         if (Player == null)
         {
-            DebugUtility.LogError($"[Skill] {DisplayName}: 부모에서 PlayerView를 찾지 못했습니다.", this);
+            DebugUtility.LogError($"[{Tag}] {DisplayName}: 부모에서 PlayerView를 찾지 못했습니다.", this);
         }
     }
 
@@ -83,9 +86,11 @@ public abstract class Skill : MonoBehaviour
 
     private Block FindNearestTarget()
     {
-        if (Player == null || Player.BlockField == null) { return null; }
+        StageManager stageManager = StageManager.Instance;
 
-        return Player.BlockField.FindNearest(transform.position, Range);
+        if (stageManager == null) { return null; }
+
+        return stageManager.FindNearest(transform.position, Range);
     }
 
     private Block FindPlayerTarget()

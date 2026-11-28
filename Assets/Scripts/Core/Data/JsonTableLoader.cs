@@ -56,6 +56,41 @@ public static class JsonTableLoader
         return rows;
     }
 
+    public static async UniTask<T> LoadObjectAsync<T>(string address, string tag, CancellationToken token) where T : class, IValidatable
+    {
+        string json = await LoadTextAsync(address, tag, token);
+
+        if (json == null) { return null; }
+
+        T data;
+
+        try
+        {
+            data = JsonConvert.DeserializeObject<T>(json, CreateSerializerSettings(tag));
+        }
+        catch (JsonException e)
+        {
+            DebugUtility.LogError($"[{tag}] JSON 읽기 실패: {e.Message}");
+            return null;
+        }
+
+        if (data == null)
+        {
+            DebugUtility.LogError($"[{tag}] JSON이 비어 있습니다.");
+            return null;
+        }
+
+        List<string> errors = data.Validate();
+
+        if (errors.Count > 0)
+        {
+            DebugUtility.LogError($"[{tag}] 설정 오류: {string.Join(", ", errors)}");
+            return null;
+        }
+
+        return data;
+    }
+
     private static async UniTask<string> LoadTextAsync(string address, string tag, CancellationToken token)
     {
         AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(address);

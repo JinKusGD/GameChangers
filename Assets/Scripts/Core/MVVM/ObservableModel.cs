@@ -16,4 +16,9 @@ public abstract class ObservableModel : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, args);
         return true;
     }
+
+    protected void RaisePropertyChanged(PropertyChangedEventArgs args)
+    {
+        PropertyChanged?.Invoke(this, args);
+    }
 }

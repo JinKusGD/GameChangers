@@ -10,6 +10,8 @@ public class SwordAttackView : Skill
 
     private double Damage => _viewModel?.Damage ?? 0;
 
+    public override double DamagePerSecond => Cooldown > 0f ? Damage / Cooldown : 0;
+
     private bool CanWaitForAttackHit => Player != null && Player.CanPlayAttackAnimation;
 
     protected override void Awake()
@@ -68,6 +70,10 @@ public class SwordAttackView : Skill
     {
         if (target == null || !target.IsAlive) { return; }
 
-        target.TakeDamage(Damage);
+        StageManager stageManager = StageManager.Instance;
+
+        if (stageManager == null) { return; }
+
+        stageManager.Damage(target, Damage);
     }
 }
