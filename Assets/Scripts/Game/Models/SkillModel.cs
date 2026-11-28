@@ -13,6 +13,8 @@ public class SkillModel : ObservableModel
     {
         public int Level;
         public int UseCount;
+        public float LastUseTime;
+        public float Cooldown;
     }
 
     private readonly List<string> _ownedSkillIds = new List<string>();
@@ -57,9 +59,12 @@ public class SkillModel : ObservableModel
         return TryGetProgress(skillId, out SkillProgress progress) ? progress.UseCount : 0;
     }
 
-    public void AddUse(string skillId)
+    public void AddUse(string skillId, float usedAt, float cooldown)
     {
         if (!TryGetProgressWithData(skillId, out SkillProgress progress, out SkillData data)) { return; }
+
+        progress.LastUseTime = usedAt;
+        progress.Cooldown = cooldown;
 
         if (data.IsMaxLevel(progress.Level)) { return; }
 
@@ -73,6 +78,18 @@ public class SkillModel : ObservableModel
         {
             LevelUp(data.Id);
         }
+    }
+
+    public float GetCooldownRatio(string skillId, float now)
+    {
+        if (!TryGetProgress(skillId, out SkillProgress progress) || progress.Cooldown <= 0f)
+        {
+            return 0f;
+        }
+
+        float remaining = progress.Cooldown - (now - progress.LastUseTime);
+
+        return Math.Clamp(remaining / progress.Cooldown, 0f, 1f);
     }
 
     public bool Add(string skillId)

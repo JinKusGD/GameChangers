@@ -20,13 +20,20 @@ public sealed class ModelManager
     public PlayerModel PlayerModel { get; } = new PlayerModel(moveSpeed: 5.0f, attackPower: 3.0);
     public CurrencyModel CurrencyModel { get; } = new CurrencyModel();
     public StageModel StageModel { get; } = new StageModel();
+    public SkillModel SkillModel { get; } = new SkillModel();
+    public SwordAttackModel SwordAttackModel { get; } = new SwordAttackModel();
 
-    public SwordAttackModel SwordAttackModel { get; } = new SwordAttackModel(
-    displayName: "검 공격",
-    targetMode: SkillTargetMode.PlayerTarget,
-    cooldown: 1.0f,
-    range: 1.2f,
-    attackPowerMultiplier: 1.0);
+    public bool TryGetSkillStats(string skillId, out ISkillStatsModel stats)
+    {
+        stats = null;
+
+        if (string.Equals(skillId, SkillIds.SwordAttack, System.StringComparison.OrdinalIgnoreCase))
+        {
+            stats = SwordAttackModel;
+        }
+
+        return stats != null;
+    }
 
     private ModelManager() { }
 

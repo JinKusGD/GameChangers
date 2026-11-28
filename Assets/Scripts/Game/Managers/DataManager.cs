@@ -22,10 +22,12 @@ public sealed class DataManager
         }
     }
 
+    public GameConfig Config { get; private set; } = new GameConfig();
     public BlockTable Blocks { get; } = new BlockTable();
     public BlockLayoutTable BlockLayouts { get; } = new BlockLayoutTable();
     public ChapterTable Chapters { get; } = new ChapterTable();
     public StageTable Stages { get; } = new StageTable();
+    public SkillTable Skills { get; } = new SkillTable();
 
     private DataManager() { }
 
@@ -33,10 +35,12 @@ public sealed class DataManager
     {
         (string Name, UniTask Task)[] loads =
         {
+            (nameof(Config), LoadConfigAsync(token)),
             (nameof(Blocks), Blocks.LoadAsync(token)),
             (nameof(BlockLayouts), BlockLayouts.LoadAsync(token)),
             (nameof(Chapters), Chapters.LoadAsync(token)),
             (nameof(Stages), Stages.LoadAsync(token)),
+            (nameof(Skills), Skills.LoadAsync(token)),
         };
 
         int loadedCount = 0;
@@ -75,6 +79,13 @@ public sealed class DataManager
         int overflowChapters = Math.Max(0, chapter - sourceChapter);
 
         return StageInfo.Create(stageData, chapterData, overflowChapters);
+    }
+
+    private async UniTask LoadConfigAsync(CancellationToken token)
+    {
+        GameConfig config = await JsonTableLoader.LoadObjectAsync<GameConfig>(AddressKeys.Data.GameConfig, nameof(GameConfig), token);
+
+        Config = config ?? new GameConfig();
     }
 
     private static async UniTask LoadSafelyAsync(string tableName, UniTask loadTask)

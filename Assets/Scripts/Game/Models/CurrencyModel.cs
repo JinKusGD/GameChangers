@@ -20,6 +20,14 @@ public class CurrencyModel : ObservableModel
         Gold += amount;
     }
 
+    public bool TrySpendGold(double amount)
+    {
+        if (amount < 0 || Gold < amount) { return false; }
+
+        Gold -= amount;
+        return true;
+    }
+
     public void Load(double gold)
     {
         Gold = Math.Max(0, gold);

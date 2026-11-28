@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-public class SwordAttackModel : ObservableModel
+public class SwordAttackModel : ObservableModel, ISkillStatsModel
 {
     private static readonly PropertyChangedEventArgs TargetModeChangedArgs = new PropertyChangedEventArgs(nameof(TargetMode));
     private static readonly PropertyChangedEventArgs CooldownChangedArgs = new PropertyChangedEventArgs(nameof(Cooldown));

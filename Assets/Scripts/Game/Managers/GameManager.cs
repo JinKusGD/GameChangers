@@ -5,7 +5,6 @@ public class GameManager : MonoBehaviour
 {
     private const string Tag = "GameManager";
     private const int TargetFrameRate = 60;
-    private const double MaxOfflineSeconds = 3600;
 
     public static GameManager Instance { get; private set; }
 
@@ -16,6 +15,7 @@ public class GameManager : MonoBehaviour
 
     public double OfflineSeconds { get; private set; }
 
+    public event Action ChapterChanged;
     public event Action StageChanged;
     public event Action Saving;
 
@@ -83,8 +83,16 @@ public class GameManager : MonoBehaviour
 
     public void ChangeStage(int chapter, int stage)
     {
-        ModelManager.Instance.StageModel.ChangeStage(chapter, stage);
+        StageModel stageModel = ModelManager.Instance.StageModel;
+        int previousChapter = stageModel.Chapter;
+
+        stageModel.ChangeStage(chapter, stage);
         _data.StageSave = new StageSaveData();
+
+        if (stageModel.Chapter != previousChapter)
+        {
+            ChapterChanged?.Invoke();
+        }
 
         StageChanged?.Invoke();
     }
@@ -93,6 +101,7 @@ public class GameManager : MonoBehaviour
     {
         ApplyCurrencyToModel();
         ApplyStageToModel();
+        ApplySkillToModel();
     }
 
     private void ApplyCurrencyToModel()
@@ -109,10 +118,25 @@ public class GameManager : MonoBehaviour
         stageModel.Load(_data.Chapter, _data.Stage);
     }
 
+    private void ApplySkillToModel()
+    {
+        SkillModel skillModel = ModelManager.Instance.SkillModel;
+
+        int maxSkillCount = _data.MaxSkillCount > 0 ? _data.MaxSkillCount : DataManager.Instance.Config.SkillUnlock.InitialMaxCount;
+
+        skillModel.Load(_data.SkillLevels, maxSkillCount);
+
+        if (DataManager.Instance.Skills.TryGetById(SkillIds.SwordAttack, out SkillData swordAttackData))
+        {
+            ModelManager.Instance.SwordAttackModel.Load(swordAttackData);
+        }
+    }
+
     private void CollectFromModels()
     {
         CollectCurrencyFromModel();
         CollectStageFromModel();
+        CollectSkillFromModel();
     }
 
     private void CollectCurrencyFromModel()
@@ -130,12 +154,20 @@ public class GameManager : MonoBehaviour
         _data.Stage = stageModel.Stage;
     }
 
+    private void CollectSkillFromModel()
+    {
+        SkillModel skillModel = ModelManager.Instance.SkillModel;
+
+        _data.SkillLevels = skillModel.CreateSaveData();
+        _data.MaxSkillCount = skillModel.MaxOwnedCount;
+    }
+
     private double CalculateOfflineSeconds()
     {
         if (_data.LastSaveUtcTicks <= 0) { return 0; }
 
         DateTime lastSaveTime = new DateTime(_data.LastSaveUtcTicks, DateTimeKind.Utc);
 
-        return Math.Clamp((DateTime.UtcNow - lastSaveTime).TotalSeconds, 0, MaxOfflineSeconds);
+        return Math.Clamp((DateTime.UtcNow - lastSaveTime).TotalSeconds, 0, DataManager.Instance.Config.Offline.MaxSeconds);
     }
 }

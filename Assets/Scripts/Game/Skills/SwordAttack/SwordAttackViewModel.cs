@@ -12,9 +12,11 @@ public class SwordAttackViewModel : IDisposable
     public SkillTargetMode TargetMode => _swordAttackModel.TargetMode;
     public float Cooldown => _swordAttackModel.Cooldown;
     public float Range => _swordAttackModel.Range;
-    public double Damage => _playerModel.AttackPower * _swordAttackModel.AttackPowerMultiplier * LevelMultiplier;
 
-    private double LevelMultiplier => _skillData != null ? _skillData.GetDamageMultiplier(_skillModel.GetLevel(SkillIds.SwordAttack)) : 1;
+    public double Damage
+    {
+        get { return SkillDamageCalculator.GetDamage(_playerModel.AttackPower, _swordAttackModel, _skillData, _skillModel.GetLevel(SkillIds.SwordAttack)); }
+    }
 
     public SwordAttackViewModel()
     {
